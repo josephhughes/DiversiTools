@@ -20,6 +20,6 @@ PMID: 24501401
 
 **Example:**
 
-    <pre><code>
+    
     perl diversiutils.pl -bam test/S3_refHPAI_cons_stampy.bam -orf test/Coding.regions.HPAI.txt -ref test/refHPAI_cons.fa
-    </code></pre>
+    
