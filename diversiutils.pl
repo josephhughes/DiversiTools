@@ -486,7 +486,11 @@ foreach my $readpos (sort {$a<=>$b} keys %readinfo){
   my $freq = $readinfo{$readpos}{"CntNonRef"}/$total;
   print READ "$total\t$freq\t";
   print READ $readinfo{$readpos}{"AvQual"}/$total."\t";
+  if ($readinfo{$readpos}{"CntRef"}){
   print READ $readinfo{$readpos}{"AvQualRef"}/$readinfo{$readpos}{"CntRef"}."\t";
+  }else{
+  print READ "NA\t";
+  }
   if ($readinfo{$readpos}{"CntNonRef"}){
   print READ $readinfo{$readpos}{"AvQualNonRef"}/$readinfo{$readpos}{"CntNonRef"}."\n";
   }else{
