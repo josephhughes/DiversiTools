@@ -470,7 +470,11 @@ foreach my $gene (keys %refseq){
         print OUT "<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\n";
     }
   }
-  print LOG "Gene $gene Average entropy = ".$sumentropy/$nbsites."\n";
+  if ($nbsites>0){
+    print LOG "Gene $gene Average entropy = ".$sumentropy/$nbsites."\n";
+  }else{
+    print LOG "Gene $gene Average entropy = Not Available\n";
+  }
 }
 # Read mismatch table:
 # ReadPos\tCntNonRef\tCntRef\tTotalCnt\tFreq\tAvQual (Freq=NonRef/TotalCnt)
