@@ -9,11 +9,10 @@
 # produces a table with Sample\tChr\tPosition\tRefBase\tCoverage\t
 # AvQual\tAcnt\tApval\tCcnt\tCpval\tTcnt\tTpval\tGcnt\tGpval\tentropy(base e)\tentropy(base 2)\tsimpson\tNonRefCnt
 # CntTv\tCntTs\tCodonPos\tCntNonSyn\tCntSyn\tOrderATCG\tinscnt\tdelcnt\tstrandbias\n
-# example command: ./btcutils -bam SamTestFiles/S1_refHPAI_cons_stampy.bam -ref SamTestFiles/refHPAI_cons.fa -stub out
-# perl btcutils.pl -bam SamTestFiles/S1_refHPAI_cons_stampy.bam -ref SamTestFiles/refHPAI_cons.fa -stub out
+# example command: ./diversiutils.pl -bam test/S3_refHPAI_cons_stampy.bam -ref test/refHPAI_cons.fa -stub out
+# perl diversiutils.pl -bam test/S3_refHPAI_cons_stampy.bam -ref test/refHPAI_cons.fa -stub out
 # option to include an orf file which will provide information about the amino acids
-# ./btcutils -bam SamTestFiles/S2_refHPAI_cons_stampy.bam -ref SamTestFiles/refHPAI_cons.fa -orf SamTestFiles/S1.Coding.regions.txt 
-
+# ./diversiutils.pl -bam test/S3_refHPAI_cons_stampy.bam -ref test/refHPAI_cons.fa -orf test/Coding.regions.HPAI.txt
 # ignores Ns in reads (not the whole read)
 
 use strict;
