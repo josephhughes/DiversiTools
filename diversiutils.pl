@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# this is a re-write of btcutils.pl
+# diversiutils.pl is a re-write of btcutils.pl
 # with strand bias and insertion deletions taken into account, median of insertion sites
 # use this to obtain the number of each base at each site from a bam file
 # you need to give the bam file and the reference fasta
@@ -454,13 +454,24 @@ foreach my $gene (keys %refseq){
       #print "$site $refbase $NucOrder\n";	
       # get the cnt of insertion and mode and for deletions
       my ($del_cnt,$ins_cnt,$freq_ins,$freq_del);
+#       if (keys %{$delfreq{$gene}{$site}}){
+#         for my $del (sort {$delfreq{$gene}{$site}{$b} <=> $delfreq{$gene}{$site}{$a}} keys %{$delfreq{$gene}{$site}}){
+#           print "DELETION $gene $site $del $delfreq{$gene}{$site}{$del}\n";
+#         }
+#       }
+#       if (keys %{$insfreq{$gene}{$site}}){
+#         for my $ins (sort {$insfreq{$gene}{$site}{$b} <=> $insfreq{$gene}{$site}{$a}} keys %{$insfreq{$gene}{$site}}){
+#           print "INSERT $gene $site $ins $insfreq{$gene}{$site}{$ins}\n";
+#         }
+#       }
+      
       if (keys %{$delfreq{$gene}{$site}}){ $del_cnt= sum values %{$delfreq{$gene}{$site}}}else{$del_cnt="<NA>"}
       if (keys %{$insfreq{$gene}{$site}}){ $ins_cnt= sum values %{$insfreq{$gene}{$site}}}else{$ins_cnt="<NA>"}
       # most frequently found insertion and deletion
       #my $freq_ins = &largest_value_mem(%{$insfreq{$gene}{$site}});
       #my $freq_del = &largest_value_mem(%{$delfreq{$gene}{$site}});
-      if (keys %{$insfreq{$gene}{$site}}){$freq_ins = (sort {$insfreq{$gene}{$site}{$a} <=> $insfreq{$gene}{$site}{$b}} keys %{$insfreq{$gene}{$site}})[0]}else{$freq_ins="<NA>"};
-      if (keys %{$delfreq{$gene}{$site}}){$freq_del = (sort {$delfreq{$gene}{$site}{$a} <=> $delfreq{$gene}{$site}{$b}} keys %{$delfreq{$gene}{$site}})[0]}else{$freq_del ="<NA>"};
+      if (keys %{$insfreq{$gene}{$site}}){$freq_ins = (sort {$insfreq{$gene}{$site}{$b} <=> $insfreq{$gene}{$site}{$a}} keys %{$insfreq{$gene}{$site}})[0]}else{$freq_ins="<NA>"};
+      if (keys %{$delfreq{$gene}{$site}}){$freq_del = (sort {$delfreq{$gene}{$site}{$b} <=> $delfreq{$gene}{$site}{$a}} keys %{$delfreq{$gene}{$site}})[0]}else{$freq_del ="<NA>"};
       print OUT "$bam\t$gene\t$site\t".uc($refbase)."\t$coverage\t$average_p\t$cntA\t".$prob{"A"}."\t$cntC\t".$prob{"C"}."\t$cntT\t".$prob{"T"}."\t$cntG\t".$prob{"G"}."\t";
       print OUT "$shannon{$gene}{$site}\t$nonrefcnt\t$Ts\t$Tv\t$NucOrder\t$strandbias\t$ins_cnt\t$freq_ins\t$del_cnt\t$freq_del\n";
     }else{#there is no coverage for that site in the bam
