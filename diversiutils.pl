@@ -294,6 +294,9 @@ foreach my $target (@targets){
                       $aafreq{$target}{$prot}{$aasite}{"RefSite"}=$site;
                       my $aamut=$raa.$aasite.$qaa;
                       if (uc($rcodon) ne uc($qcodon)){
+                      # the syn and non-syn counts only refer to codons where there are changes
+                      # i.e. when the codon is the same as the reference, this is not counted as being a non-synonymous count
+                      # the count for syn and non-syn is the number of changes relative to the reference codon, this can range from 1-3
                         if(uc($raa) eq uc($qaa)){
                           my $mm=mismatch_count($rcodon,$qcodon);
                           $aafreq{$target}{$prot}{$aasite}{"syn"}+=$mm;
