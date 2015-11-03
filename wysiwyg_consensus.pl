@@ -236,22 +236,22 @@ foreach my $gene (keys %refseq){
       my $coverage = $cntA + $cntT + $cntC + $cntG;
       my $average_p=$cumulqual{$gene}{$site}/$coverage;
       my $p = $average_p/3;
-      my %prob;
-      $prob{"A"} = 1 - (&Math::CDF::pbinom(($cntA-1), $coverage, $p));# need to double check with Richard about the -1
-      $prob{"C"} = 1 - (&Math::CDF::pbinom(($cntC-1), $coverage, $p));
-      $prob{"T"} = 1 - (&Math::CDF::pbinom(($cntT-1), $coverage, $p));
-      $prob{"G"} = 1 - (&Math::CDF::pbinom(($cntG-1), $coverage, $p));
-      if ($coverage>0){
-        foreach my $nuc (@nuc){
-          my $nucnt=$basefreq{$gene}{$site}{1}{$nuc}+$basefreq{$gene}{$site}{-1}{$nuc};
-          my $p = $nucnt / $coverage;
-          if($nucnt > 0){
-            $shannon{$gene}{$site} += -$p*log($p);#natural log, i.e. log base e
-          }
-        }   
-      }else{
-        $shannon{$gene}{$site}="<NA>";
-      }   
+#       my %prob;
+#       $prob{"A"} = 1 - (&Math::CDF::pbinom(($cntA-1), $coverage, $p));# need to double check with Richard about the -1
+#       $prob{"C"} = 1 - (&Math::CDF::pbinom(($cntC-1), $coverage, $p));
+#       $prob{"T"} = 1 - (&Math::CDF::pbinom(($cntT-1), $coverage, $p));
+#       $prob{"G"} = 1 - (&Math::CDF::pbinom(($cntG-1), $coverage, $p));
+#       if ($coverage>0){
+#         foreach my $nuc (@nuc){
+#           my $nucnt=$basefreq{$gene}{$site}{1}{$nuc}+$basefreq{$gene}{$site}{-1}{$nuc};
+#           my $p = $nucnt / $coverage;
+#           if($nucnt > 0){
+#             $shannon{$gene}{$site} += -$p*log($p);#natural log, i.e. log base e
+#           }
+#         }   
+#       }else{
+#         $shannon{$gene}{$site}="<NA>";
+#       }   
       $nbsites++;
       $sumentropy=$sumentropy+$shannon{$gene}{$site};
       my $refbase=$refbase{$gene}{$site};
@@ -284,8 +284,9 @@ foreach my $gene (keys %refseq){
       # most frequently found insertion and deletion
       #my $freq_ins = &largest_value_mem(%{$insfreq{$gene}{$site}});
       #my $freq_del = &largest_value_mem(%{$delfreq{$gene}{$site}});
-      if (keys %{$insfreq{$gene}{$site}}){$freq_ins = (sort {$insfreq{$gene}{$site}{$a} <=> $insfreq{$gene}{$site}{$b}} keys %{$insfreq{$gene}{$site}})[0]}else{$freq_ins="<NA>"};
-      if (keys %{$delfreq{$gene}{$site}}){$freq_del = (sort {$delfreq{$gene}{$site}{$a} <=> $delfreq{$gene}{$site}{$b}} keys %{$delfreq{$gene}{$site}})[0]}else{$freq_del ="<NA>"};
+     # need to sort in descending order so that the most frequent is first 
+      if (keys %{$insfreq{$gene}{$site}}){$freq_ins = (sort {$insfreq{$gene}{$site}{$b} <=> $insfreq{$gene}{$site}{$a}} keys %{$insfreq{$gene}{$site}})[0]}else{$freq_ins="<NA>"};
+      if (keys %{$delfreq{$gene}{$site}}){$freq_del = (sort {$delfreq{$gene}{$site}{$b} <=> $delfreq{$gene}{$site}{$a}} keys %{$delfreq{$gene}{$site}})[0]}else{$freq_del ="<NA>"};
       #print OUT "$bam\t$gene\t$site\t".uc($refbase)."\t$coverage\t$average_p\t$cntA\t".$prob{"A"}."\t$cntC\t".$prob{"C"}."\t$cntT\t".$prob{"T"}."\t$cntG\t".$prob{"G"}."\t";
       #print OUT "$shannon{$gene}{$site}\t$nonrefcnt\t$Ts\t$Tv\t$NucOrder\t$strandbias\t$ins_cnt\t$freq_ins\t$del_cnt\t$freq_del\n";
       if (uc($refbase) eq uc($topNuc)){ 
@@ -303,10 +304,20 @@ foreach my $gene (keys %refseq){
       }
 
     }else{#there is no coverage for that site in the bam
+      # this should be a deletion as there is no ATGC at this site 
+      # check that previous site does not have del or insertion associated
         #print "No coverage $site\n";
         #print OUT "$bam\t$gene\t$site\t".uc($refseq{$gene}{$site})."\t0\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t";
         #print OUT "<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\n";
-        print CONS "N";
+        if (keys %{$insfreq{$gene}{$site}}){
+          print "Warning: There are insertions in $gene at site $site\n";
+        }
+        if (keys %{$insfreq{$gene}{$site}}){
+          print "Warning: There are deletions in $gene at site $site\n";
+        }else{
+          #print CONS "N";
+          print CONS "-";
+        }
     }
   }
   print LOG "Gene $gene Average entropy = ".$sumentropy/$nbsites."\n";
