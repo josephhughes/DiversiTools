@@ -2,13 +2,13 @@
 <html>
 
   <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="BTCtools : Beyond the consensus NGS tools" />
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Diversitools : Tool for analysing diversity from Sequence Alignment/Map">
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-    <title>diversiTools</title>
+    <title>Diversitools</title>
   </head>
 
   <body>
@@ -16,14 +16,14 @@
     <!-- HEADER -->
     <div id="header_wrap" class="outer">
         <header class="inner">
-          <a id="forkme_banner" href="https://github.com/josephhughes/btctools">View on GitHub</a>
+          <a id="forkme_banner" href="https://github.com/josephhughes/DiversiTools">View on GitHub</a>
 
-          <h1 id="project_title">diversiTools</h1>
-          <h2 id="project_tagline">Command-line tutorial</h2>
+          <h1 id="project_title">Diversitools</h1>
+          <h2 id="project_tagline">Tool for analysing diversity from Sequence Alignment/Map</h2>
 
             <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/josephhughes/btctools/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/josephhughes/btctools/tarball/master">Download this project as a tar.gz file</a>
+              <a class="zip_download_link" href="https://github.com/josephhughes/DiversiTools/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/josephhughes/DiversiTools/tarball/master">Download this project as a tar.gz file</a>
             </section>
         </header>
     </div>
@@ -31,24 +31,28 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <p>Here I will try to explain how you can run the various btctools from the command-line. The core of btctools is written in perl and makes use of the the <a href="http://search.cpan.org/~lds/Bio-SamTools/">Bio-SamTools module</a> written by Lincoln D. Stein. 
+        <p>Here I will try to explain how you can run the various diversitools from the command-line. The core of diversitools is written in perl and makes use of the the <a href="http://search.cpan.org/~lds/Bio-SamTools/">Bio-SamTools module</a> written by Lincoln D. Stein. 
         So the various perl script can be run from the command-line to automate the processing on multiple bam files.</p>
         
-        <p>There are two basic processing scripts: <a href="#btcutils">btcutils</a> which is used for processing a BAM file and <a href="#btcmerge">btcmerge</a> which is used for combining multiple btc outputs.
+        <p>There are two basic processing scripts: <a href="#diversiutils">diversiutils</a> which is used for processing a BAM file and <a href="#diversimerge">diversimerge</a> which is used for combining multiple outputs.
      
 <h2>
-<a name="btcutils" class="anchor" href="#btcutils"><span class="octicon octicon-link"></span></a>btcutils</h2>
+<a name="diversiutils" class="anchor" href="#diversiutils"><span class="octicon octicon-link"></span></a>diversiutils</h2>
 
 <p>This script is used to generate the files that contain the frequencies of various mutations from the bam file. In the most basic form, you may just be interested in the number of SNPs at each site of your alignment. From the directory where the perl script is located:</p>
 
-<pre><code>$ perl btcutils.pl -bam path/to/input.bam -ref path/to/reference.fasta -stub out
+<pre><code>$ perl diversiutils.pl -bam path/to/input.bam -ref path/to/reference.fasta -stub out
 </code></pre>
 
-<p>Bear in mind that the bam file needs its associated index file (.bai). All of the arguments above are necessary to run btcutils. The output from the latter command will be 4 files:</p>
+This is an example using files in the test directory:
+<pre><code>$ perl diversiutils.pl -bam test/S18_refLPAI.bam -ref test/refLPAI.fa -stub S18
+</code></pre>
+
+
+<p>Bear in mind that the bam file needs its associated index file (.bai). All of the arguments above are necessary to run diversiutils. The output from the latter command will be 3 files:</p>
 <p><ul>
 <li>out_entropy.txt which contains the frequency of mutations at each individual site for each of the gene segments</li>
 <li>out_log.txt which contains the distribution of mutations per read and the average entropy per gene segment</li>
-<li>out_motif.fa a fasta file with 10 bases either side of each mutation</li>
 <li>out_read.txt the per read position mutation count and average quality</li>
 </ul>
 </p>
@@ -70,23 +74,25 @@
 <li>CntTv: the total number of transversions at that site</li>
 <li>CntTs: the total number of transitions at that sites</li>
 <li>OrderOfNucs: the order of the nucleotides based on each nucleotide count</li>
+<li>Strandbias: the number of reads supporting each base in the forward and the reverse direction (e.g., A1:0;C83:2;T0:0;G1:0)</li>
+<li>ins_cnt: the number of reads with inserts at that position</li>
+<li>ins_mode: the sequence of the insert that occurs the most frequently</li>
+<li>del_cnt: the number of reads with deletions at that site</li>
+<li>del_mode: the sequence of the deletion that occurs the most frequently</li>
 </ul>
 </p>
 
 <h3>out_log.txt file</h3>
 <p>out_log.txt contains summary statistics from the alignment:
 <ul>
-<li>Number of reads with inserts: reads with insertions or deletions are excluded from all the btc output files</li>
-<li>Number of reads with Ns: these are also excluded from analyses</li>
-<li>Number of sequence used: this provides the total number of reads used for generating the btc files</li>
 <li>Frequency of mismatches per read (mismatches: number of reads): this provides a distribution of the number of mismatches found per read</li>
 <li>Gene Average entropy: the average entropy for each of the genes in the dataset is provided</li>
 </ul>
 </p>
 
 <h3>out_read.txt file</h3>
-<p>out_read.txt contains information about mismatches per read postion which can be used to determine whether harsher trimming is required. This table assumes that you have 
-the same number of bases in each reads, if not the results may be irrelevant as there will be different coverage for each site of the reads:
+<p>out_read.txt contains information about mismatches per read position which can be used to determine whether harsher trimming is required. This table assumes that you have 
+the same number of bases in each read, if not the results may be irrelevant as there will be different coverage for each site of the reads:
 <ul>
 <li>ReadPos: the position in the read (e.g., 1 to 150)</li>
 <li>CntRef: number of bases matching the reference at this position</li>
@@ -100,7 +106,7 @@ the same number of bases in each reads, if not the results may be irrelevant as 
 </p>
 
 <h2>
-<a name="btcutils" class="anchor" href="#btcutils"><span class="octicon octicon-link"></span></a>btcutils with ORFs</h2>
+<a name="diversiutils" class="anchor" href="#diversiutils"><span class="octicon octicon-link"></span></a>diversiutils with ORFs</h2>
 
 
 <p>It is also possible to provide information about the number of non-synonymous and synonymous mutations at each amino acid site, but to do this you need to provide a text file (e.g. CodingRegion.txt) with the information about the protein names and open reading frames, in the following tab delimited format:</p>
