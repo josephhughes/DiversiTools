@@ -34,7 +34,7 @@
         <p>Here I will try to explain how you can run the various diversitools from the command-line. The core of diversitools is written in perl and makes use of the the <a href="http://search.cpan.org/~lds/Bio-SamTools/">Bio-SamTools module</a> written by Lincoln D. Stein. 
         So the various perl script can be run from the command-line to automate the processing on multiple bam files.</p>
         
-        <p>There are two basic processing scripts: <a href="#diversiutils">diversiutils</a> which is used for processing a BAM file and <a href="#diversimerge">diversimerge</a> which is used for combining multiple outputs.
+        <p>There are two basic processing scripts: <a href="#diversiutils">diversiutils</a> which is used for processing a BAM file and <a href="#diversifilter">diversifilter</a> which is used for filtering the output according to quality and strand bias criteria.
      
 <h2>
 <a name="diversiutils" class="anchor" href="#diversiutils"><span class="octicon octicon-link"></span></a>diversiutils</h2>
@@ -153,17 +153,25 @@ PA-X_B	598	784	PA_Influenza
 </ul>
 </p>
 
-<<<<<<< HEAD
 <h2>
-<a name="btcmerge" class="anchor" href="#btcmerge"><span class="octicon octicon-link"></span></a>btcmerge</h2>
-=======
+<a name="multisamples" class="anchor" href="#multisampels"><span class="octicon octicon-link"></span></a>Processing multiple samples</h2>
+
+<p>One of the advantages of being able to run scripts from the command line, is the option to be able to automate the process. 
+For example, we can process all the bam files that have been aligned to the LPAI reference wil the following script.</p>
+
+<pre><code>$ for file in test/*_refLPAI.bam;do perl diversiutils.pl -bam $file -ref test/refLPAI.fa -orf test/Coding.regions.LPAI.txt -stub ${file%_refLPAI.bam};done
+</code></pre>
 
 
-<h3>
-<a name="btcmerge" class="anchor" href="#btcmerge"><span class="octicon octicon-link"></span></a>btcmerge</h3>
->>>>>>> 89a80b2b410d3060c8701e119c4ccb96c8736c7f
+<h2>
+<a name="diversifilter" class="anchor" href="#diversifilter"><span class="octicon octicon-link"></span></a>diversifilter</h2>
 
-<p>Once you have produced multiple btc files, you may want to merge several, either to compare the results from independent replicates, or to compare the intra-host diversity from different individuals, or even to compare closely related viruses in the same or different individuals.</p>
+<p>Once you have produced processed multiple files, you may want to filter them based on the probabilities of the bases being above the significance level of the binomial test or to remove bases that have strand bias using the Fisher's exact test. For this you can use the diversifilter perl script.</p>
+
+<p>This is an example of filtering the entropy file according to bases that are found below the quality threshold of 0.05 and below the strand bias significance of 0.05.</p>
+<pre><code>$ perl diversifilter.pl -in S18 -pQ 0.05 -pS 0.05 -stub S18_pQ05pS05
+</code></pre>
+<p>The output is the same as the out_entropy.txt file except that bases that have not passed the threshold will be replaced with 0 and the entropy will be recalculated using only the bases that have passed the quality threshold.</p>
 
       </section>
     </div>
@@ -171,7 +179,7 @@ PA-X_B	598	784	PA_Influenza
     <!-- FOOTER  -->
     <div id="footer_wrap" class="outer">
       <footer class="inner">
-        <p class="copyright">BTCtools maintained by <a href="https://github.com/josephhughes">josephhughes</a> and <a href="https://github.com/rjorton">rjorton</a></p>
+        <p class="copyright">diversitools maintained by <a href="https://github.com/josephhughes">josephhughes</a> and <a href="https://github.com/rjorton">rjorton</a></p>
         <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
