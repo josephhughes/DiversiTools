@@ -159,7 +159,10 @@ PA-X_B	598	784	PA_Influenza
 <p>One of the advantages of being able to run scripts from the command line, is the option to be able to automate the process. 
 For example, we can process all the bam files that have been aligned to the LPAI reference wil the following script.</p>
 
-<pre><code>$ for file in test/*_refLPAI.bam;do perl diversiutils.pl -bam $file -ref test/refLPAI.fa -orf test/Coding.regions.LPAI.txt -stub ${file%_refLPAI.bam};done
+<pre><code>$ for file in test/*_refLPAI.bam;
+do 
+perl diversiutils.pl -bam $file -ref test/refLPAI.fa -orf test/Coding.regions.LPAI.txt -stub ${file%_refLPAI.bam};
+done
 </code></pre>
 
 
