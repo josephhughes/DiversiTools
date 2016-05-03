@@ -271,7 +271,7 @@ foreach my $target (@targets){
                     }
                     # check that the site is in a coding region, that it is the first codon position of the coding region and that the read is long enough for final codon
                     if ($site>=$codreg{$target}{$prot}{"Beg"} && $site<=$codreg{$target}{$prot}{"End"} && $mod==1 && $i<(scalar(@bases)-2)){
-                      #print "Coding region for $prot Site $site and Modular $mod\t";
+                      #print "$prot\t$target\tCoding region for $prot Site $site and Modular $mod\n";
                       my $rcodon=$refbases[$i].$refbases[$i+1].$refbases[$i+2];
                       my $qcodon=$bases[$i].$bases[$i+1].$bases[$i+2];
                       #ignore AA if 
@@ -288,8 +288,10 @@ foreach my $target (@targets){
                       # the position of the mutation
                       # Sample\tChr\tAAPosition\tRefAA\tRefCodon\tCntNonSyn\tCntSyn\tTopAA\tTopAAcnt\tSndAA\tSndAAcnt\tTrdAA\tTrdAAcnt\tAAcoverage\tNbStop
                       $aafreq{$target}{$prot}{$aasite}{"AAcoverage"}++;#this will provide the coverage
+                      #print $aasite."\t".$aafreq{$target}{$prot}{$aasite}{"AAcoverage"}."\t".$aafreq{$target}{$prot}{$aasite}{"RefAA"}."\t$target\t$prot\t$rcodon\t$raa\t$qcodon\t$qaa\n";
                       $aaorder{$target}{$prot}{$aasite}{$qaa}++;
                       $aafreq{$target}{$prot}{$aasite}{"RefAA"}=$raa;
+                      #print $aafreq{$target}{$prot}{$aasite}{"RefAA"}."\t>$target<\t>$prot<>$aasite<\n";
                       $aafreq{$target}{$prot}{$aasite}{"RefCodon"}=$rcodon;
                       $aafreq{$target}{$prot}{$aasite}{"RefSite"}=$site;
                       my $aamut=$raa.$aasite.$qaa;
@@ -370,6 +372,7 @@ foreach my $target (@targets){
     }
   }
 }
+print "\n";
 print LOG "$bam:\n";
 # print out the number of reads with 1 , 2, 3, 4, etc.. mismatches
 print LOG "Frequency of mismatches per read (mismatches: number of reads)\n";
@@ -515,18 +518,28 @@ if ($orfs){
   open (AA, ">$stub\_AA.txt")||die "can't open $stub\_AA.txt\n";
   # the position of the mutation
   print AA "Sample\tChr\tProtein\tAAPosition\tRefAA\tRefSite\tRefCodon\tFstCodonPos\tSndCodonPos\tTrdCodonPos\tCntNonSyn\tCntSyn\tNbStop\tTopAA\tTopAAcnt\tSndAA\tSndAAcnt\tTrdAA\tTrdAAcnt\tAAcoverage\n";
-    foreach my $target (keys %aafreq){
-      foreach my $prot (keys %{$aafreq{$target}}){
-        foreach my $aasite (sort {$a<=>$b} keys %{$aafreq{$target}{$prot}}){
+    #foreach my $target (keys %aafreq){
+    foreach my $target (keys %codreg){
+      #foreach my $prot (keys %{$aafreq{$target}}){
+      foreach my $prot (keys %{$codreg{$target}}){
+        # dealing with lack of coverage within regions of the protein
+        # #$codreg{Chr name}{ProteinName}{"Beg"}
+        my $beg=$codreg{$target}{$prot}{"Beg"};
+        my $end=$codreg{$target}{$prot}{"End"};
+        my $aacnt=($end-$beg)/3;
+        #foreach my $aasite (sort {$a<=>$b} keys %{$aafreq{$target}{$prot}}){
+        for (my $aasite=1; $aasite<=$aacnt; $aasite++){
+          if (defined $aafreq{$target}{$prot}{$aasite}{"RefAA"}){
           print AA "$bam\t$target\t$prot\t$aasite\t";
+          
           print AA $aafreq{$target}{$prot}{$aasite}{"RefAA"}."\t";
           print AA $aafreq{$target}{$prot}{$aasite}{"RefSite"}."\t";
           print AA $aafreq{$target}{$prot}{$aasite}{"RefCodon"}."\t";
-          print AA $aafreq{$target}{$prot}{$aasite}{"firstcodonpos"}."\t";
-          print AA $aafreq{$target}{$prot}{$aasite}{"secondcodonpos"}."\t";
-          print AA $aafreq{$target}{$prot}{$aasite}{"thirdcodonpos"}."\t";
-          print AA $aafreq{$target}{$prot}{$aasite}{"nonsyn"}."\t";
-          print AA $aafreq{$target}{$prot}{$aasite}{"syn"}."\t";
+          if ($aafreq{$target}{$prot}{$aasite}{"firstcodonpos"}=~/\d+/){ print AA $aafreq{$target}{$prot}{$aasite}{"firstcodonpos"}."\t";}else{ print AA "<NA>\t"}
+          if ($aafreq{$target}{$prot}{$aasite}{"secondcodonpos"}=~/\d+/){ print AA $aafreq{$target}{$prot}{$aasite}{"secondcodonpos"}."\t";}else{ print AA "<NA>\t"}
+          if ($aafreq{$target}{$prot}{$aasite}{"thirdcodonpos"}=~/\d+/){ print AA $aafreq{$target}{$prot}{$aasite}{"thirdcodonpos"}."\t";}else{ print AA "<NA>\t"}
+          if ($aafreq{$target}{$prot}{$aasite}{"nonsyn"}=~/\d+/){ print AA $aafreq{$target}{$prot}{$aasite}{"nonsyn"}."\t";}else{ print AA "<NA>\t"}
+          if ($aafreq{$target}{$prot}{$aasite}{"syn"}=~/\d+/){ print AA $aafreq{$target}{$prot}{$aasite}{"syn"}."\t";}else{ print AA "<NA>\t"}
           my ($stop_plus,$stop_neg);
           if ($stopfreq{$target}{$prot}{$aasite}{1}){ $stop_plus = $stopfreq{$target}{$prot}{$aasite}{1}}else{$stop_plus="0"}
           if ($stopfreq{$target}{$prot}{$aasite}{-1}){ $stop_neg = $stopfreq{$target}{$prot}{$aasite}{-1}}else{$stop_neg="0"}
@@ -541,10 +554,13 @@ if ($orfs){
             }
           }
           while ($topAAs<3){# if there are less than three different AAs
-            print AA "\t\t";
+            print AA "<NA>\t<NA>\t";
             $topAAs++;
           }
           print AA $aafreq{$target}{$prot}{$aasite}{"AAcoverage"}."\n";
+        }else{# close if statement
+          print AA "$bam\t$target\t$prot\t$aasite\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t0\n";
+        }
         }
       }
     }
