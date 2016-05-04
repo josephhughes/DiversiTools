@@ -388,7 +388,7 @@ open (OUT, ">$stub\_entropy.txt")||die "can't open $stub\_entropy.txt\n";
 # CntTv\tCntTs\tOrderATCG\tstrandbias\tins_cnt\tins_mode\tdel_cnt\tdel_mode\n
 # strandbias as A3:5C5:6G4:5T5:7
 
-print OUT "Sample\tChr\tPosition\tRefBase\tCoverage\tAvQual\tAcnt\tApval\tCcnt\tCpval\tTcnt\tTpval\tGcnt\tGpval\tentropy(base e)\tNonRefCnt\tCntTv\tCntTs\tOrderOfNucs\tstrandbias\tins_cnt\tins_mode\tdel_cnt\tdel_mode\n";
+print OUT "Sample\tChr\tPosition\tRefBase\tCoverage\tAvQual\tAcnt\tApval\tCcnt\tCpval\tTcnt\tTpval\tGcnt\tGpval\tentropy(base e)\tNonRefCnt\tCntTv\tCntTs\tOrderOfNucs\tstrandbias\tins_cnt\tins_mode\tdel_cnt\tdel_mode\tNcnt\n";
 foreach my $gene (keys %refseq){
   my $nbsites=0;
   my $sumentropy=0;
@@ -397,7 +397,7 @@ foreach my $gene (keys %refseq){
     #print "$site\n";
     if (keys %{$basefreq{$gene}{$site}}){# if there is information in the bam file about this site
       # strandbias info
-      my ($Aplus,$Aneg,$Cplus,$Cneg,$Tplus,$Tneg,$Gplus,$Gneg);
+      my ($Aplus,$Aneg,$Cplus,$Cneg,$Tplus,$Tneg,$Gplus,$Gneg,$Nplus,$Nneg);
       if ($basefreq{$gene}{$site}{1}{"A"}){ $Aplus=$basefreq{$gene}{$site}{1}{"A"}}else{$Aplus=0}
       if ($basefreq{$gene}{$site}{-1}{"A"}){ $Aneg=$basefreq{$gene}{$site}{-1}{"A"}}else{$Aneg=0}
       if ($basefreq{$gene}{$site}{1}{"C"}){ $Cplus=$basefreq{$gene}{$site}{1}{"C"}}else{$Cplus=0}
@@ -406,9 +406,12 @@ foreach my $gene (keys %refseq){
       if ($basefreq{$gene}{$site}{-1}{"T"}){ $Tneg=$basefreq{$gene}{$site}{-1}{"T"}}else{$Tneg=0}
       if ($basefreq{$gene}{$site}{1}{"G"}){ $Gplus=$basefreq{$gene}{$site}{1}{"G"}}else{$Gplus=0}
       if ($basefreq{$gene}{$site}{-1}{"G"}){ $Gneg=$basefreq{$gene}{$site}{-1}{"G"}}else{$Gneg=0}
+      if ($basefreq{$gene}{$site}{1}{"N"}){ $Nplus=$basefreq{$gene}{$site}{1}{"N"}}else{$Nplus=0}
+      if ($basefreq{$gene}{$site}{-1}{"N"}){ $Nneg=$basefreq{$gene}{$site}{-1}{"N"}}else{$Nneg=0}
+
       my $strandbias="A$Aplus".":$Aneg;"."C$Cplus".":$Cneg;"."T$Tplus".":$Tneg;"."G$Gplus".":$Gneg";
 
-      my ($cntA,$cntC,$cntT,$cntG);
+      my ($cntA,$cntC,$cntT,$cntG,$cntN);
 #       if ($basefreq{$bam}{$gene}{$site}{1}{"A"} || $basefreq{$bam}{$gene}{$site}{-1}{"A"}){ $cntA = $basefreq{$bam}{$gene}{$site}{1}{"A"}+$basefreq{$bam}{$gene}{$site}{-1}{"A"}}else{$cntA=0}
 #       if ($basefreq{$bam}{$gene}{$site}{1}{"C"} || $basefreq{$bam}{$gene}{$site}{-1}{"C"}){ $cntC = $basefreq{$bam}{$gene}{$site}{1}{"C"}+$basefreq{$bam}{$gene}{$site}{-1}{"C"}}else{$cntC=0}
 #       if ($basefreq{$bam}{$gene}{$site}{1}{"T"} || $basefreq{$bam}{$gene}{$site}{-1}{"T"}){ $cntT = $basefreq{$bam}{$gene}{$site}{1}{"T"}+$basefreq{$bam}{$gene}{$site}{-1}{"T"}}else{$cntT=0}
@@ -417,7 +420,8 @@ foreach my $gene (keys %refseq){
       $cntC=$Cplus+$Cneg;
       $cntT=$Tplus+$Tneg;
       $cntG=$Gplus+$Gneg;
-      my $coverage = $cntA + $cntT + $cntC + $cntG;
+      $cntN=$Nplus+$Nneg;
+      my $coverage = $cntA + $cntT + $cntC + $cntG + $cntN;
       my $average_p=$cumulqual{$gene}{$site}/$coverage;
       my $p = $average_p/3;
       my %prob;
@@ -479,11 +483,11 @@ foreach my $gene (keys %refseq){
       if (keys %{$insfreq{$gene}{$site}}){$freq_ins = (sort {$insfreq{$gene}{$site}{$b} <=> $insfreq{$gene}{$site}{$a}} keys %{$insfreq{$gene}{$site}})[0]}else{$freq_ins="<NA>"};
       if (keys %{$delfreq{$gene}{$site}}){$freq_del = (sort {$delfreq{$gene}{$site}{$b} <=> $delfreq{$gene}{$site}{$a}} keys %{$delfreq{$gene}{$site}})[0]}else{$freq_del ="<NA>"};
       print OUT "$bam\t$gene\t$site\t".uc($refbase)."\t$coverage\t$average_p\t$cntA\t".$prob{"A"}."\t$cntC\t".$prob{"C"}."\t$cntT\t".$prob{"T"}."\t$cntG\t".$prob{"G"}."\t";
-      print OUT "$shannon{$gene}{$site}\t$nonrefcnt\t$Ts\t$Tv\t$NucOrder\t$strandbias\t$ins_cnt\t$freq_ins\t$del_cnt\t$freq_del\n";
+      print OUT "$shannon{$gene}{$site}\t$nonrefcnt\t$Ts\t$Tv\t$NucOrder\t$strandbias\t$ins_cnt\t$freq_ins\t$del_cnt\t$freq_del\t$cntN\n";
     }else{#there is no coverage for that site in the bam
         #print "No coverage $site\n";
         print OUT "$bam\t$gene\t$site\t".uc($refseq{$gene}{$site})."\t0\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t";
-        print OUT "<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\n";
+        print OUT "<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\n";
     }
   }
   if ($nbsites>0){
