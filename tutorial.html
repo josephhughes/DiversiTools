@@ -41,11 +41,11 @@
 
 <p>This script is used to generate the files that contain the frequencies of various mutations from the bam file. In the most basic form, you may just be interested in the number of SNPs at each site of your alignment. From the directory where the perl script is located:</p>
 
-<pre><code>$ perl diversiutils.pl -bam path/to/input.bam -ref path/to/reference.fasta -stub out
+<pre><code>$ perl bin/diversiutils.pl -bam path/to/input.bam -ref path/to/reference.fasta -stub out
 </code></pre>
 
 This is an example using files in the test directory:
-<pre><code>$ perl diversiutils.pl -bam test/S18_refLPAI.bam -ref test/refLPAI.fa -stub S18
+<pre><code>$ perl bin/diversiutils.pl -bam test/S18_refLPAI.bam -ref test/refLPAI.fa -stub S18
 </code></pre>
 
 
@@ -122,7 +122,7 @@ PA-X_B	598	784	PA_Influenza
 
 <p>The first column corresponds to the protein name, the names in this column must be unique, the second column corresponds to the start of the orf for that protein, the third is the end of the orf for the protein and the fourth corresponds to the identifier (name) of the reference in your reference file from which the protein is transcribed. Run the command:</p>
 
-<pre><code>$ perl btcutils.pl -bam path/to/input.bam -ref path/to/reference.fasta -orfs CodingRegions.txt -stub out
+<pre><code>$ perl bin/diversiutils.pl -bam path/to/input.bam -ref path/to/reference.fasta -orfs CodingRegions.txt -stub out
 </code></pre>
 
 <p>The latter command produces all of the previous 4 files with an additional out_AA.txt with the information about the non-synonymous, synonymous and stop-codons.</p>
@@ -161,7 +161,7 @@ For example, we can process all the bam files that have been aligned to the LPAI
 
 <pre><code>for file in test/*_refLPAI.bam
 do 
-perl diversiutils.pl -bam $file -ref test/refLPAI.fa -orf test/Coding.regions.LPAI.txt -stub ${file%_refLPAI.bam}
+perl bin/diversiutils.pl -bam $file -ref test/refLPAI.fa -orf test/Coding.regions.LPAI.txt -stub ${file%_refLPAI.bam}
 done
 </code></pre>
 
@@ -172,7 +172,7 @@ done
 <p>Once you have produced processed multiple files, you may want to filter them based on the probabilities of the bases being above the significance level of the binomial test or to remove bases that have strand bias using the Fisher's exact test. For this you can use the diversifilter perl script.</p>
 
 <p>This is an example of filtering the entropy file according to bases that are found below the quality threshold of 0.05 and below the strand bias significance of 0.05.</p>
-<pre><code>$ perl diversifilter.pl -in S18 -pQ 0.05 -pS 0.05 -stub S18_pQ05pS05
+<pre><code>$ perl bin/diversifilter.pl -in S18 -pQ 0.05 -pS 0.05 -stub S18_pQ05pS05
 </code></pre>
 <p>The output is the same as the out_entropy.txt file except that base counts that have not passed the threshold will be replaced with 0 and the entropy will be recalculated using only the bases that have passed the quality threshold.</p>
 
