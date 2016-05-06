@@ -72,7 +72,7 @@ while( my $seq = $seq_in->next_seq() ) {
 }
 
 # if an orfs file is specified, read in the coding regions and load the IUPAC info and codon ambiguity code
-my (%codreg, %IUPAC, %c2p);
+my (%codreg, %IUPAC, %c2p, @proteins);
 if ($orfs){
     open (CODING,"<$orfs")||die "Can't open $orfs\n";
     my $firstLine = <CODING>; 
@@ -82,6 +82,7 @@ if ($orfs){
       while(<CODING>){
         chomp($_);
         my @elements=split(/\t/,$_);
+        push(@proteins,$elements[0]);
         $codreg{$elements[3]}{$elements[0]}{"Beg"}=$elements[1];#$codreg{Chr name}{ProteinName}{"Beg"}
         $codreg{$elements[3]}{$elements[0]}{"End"}=$elements[2];
         my $codlength=$elements[2]-$elements[1]+1;
@@ -506,21 +507,14 @@ foreach my $gene (keys %refseq){
 open (READ, ">$stub\_read.txt")||die "can't open $stub\_read.txt\n";
 print READ "ReadPos\tCntRef\tCntNonRef\tTotalCnt\tFreq\tAvQual\tAvQualRef\tAvQualNonRef\n";
 foreach my $readpos (sort {$a<=>$b} keys %readinfo){
-  print READ "$readpos\t".$readinfo{$readpos}{"CntRef"}."\t".$readinfo{$readpos}{"CntNonRef"}."\t";
+  print READ "$readpos\t";
+  if ($readinfo{$readpos}{"CntRef"}=~/.+/){ print READ $readinfo{$readpos}{"CntRef"}."\t";}else{ print READ "<NA>\t"}
+  if ($readinfo{$readpos}{"CntNonRef"}=~/.+/){ print READ $readinfo{$readpos}{"CntNonRef"}."\t";}else{ print READ "<NA>\t"}
   my $total = $readinfo{$readpos}{"CntNonRef"}+$readinfo{$readpos}{"CntRef"};
-  my $freq = $readinfo{$readpos}{"CntNonRef"}/$total;
-  print READ "$total\t$freq\t";
-  print READ $readinfo{$readpos}{"AvQual"}/$total."\t";
-  if ($readinfo{$readpos}{"CntRef"}){
-  print READ $readinfo{$readpos}{"AvQualRef"}/$readinfo{$readpos}{"CntRef"}."\t";
-  }else{
-  print READ "NA\t";
-  }
-  if ($readinfo{$readpos}{"CntNonRef"}){
-  print READ $readinfo{$readpos}{"AvQualNonRef"}/$readinfo{$readpos}{"CntNonRef"}."\n";
-  }else{
-  print READ "NA\n"
-  }
+  if ($total>0){ print READ $total."\t".$readinfo{$readpos}{"CntNonRef"}/$total."\t";}else{ print READ "<NA>\t<NA>\t"}
+  if ($readinfo{$readpos}{"AvQual"}=~/.+/ & $total>0){ print READ $readinfo{$readpos}{"AvQual"}/$total."\t";}else{print READ "<NA>\t"}
+  if ($readinfo{$readpos}{"CntRef"}=~/.+/){print READ $readinfo{$readpos}{"AvQualRef"}/$readinfo{$readpos}{"CntRef"}."\t";}else{print READ "<NA>\t";}
+  if ($readinfo{$readpos}{"CntNonRef"}=~/.+/){print READ $readinfo{$readpos}{"AvQualNonRef"}/$readinfo{$readpos}{"CntNonRef"}."\n";}else{print READ "<NA>\n"}
 }
 # loop for the aa mutations and position of mismatches in the codon
 if ($orfs){
@@ -530,7 +524,8 @@ if ($orfs){
     #foreach my $target (keys %aafreq){
     foreach my $target (keys %codreg){
       #foreach my $prot (keys %{$aafreq{$target}}){
-      foreach my $prot (keys %{$codreg{$target}}){
+      #foreach my $prot (keys %{$codreg{$target}}){
+      foreach my $prot (@proteins){  #to provide the output in the same order as the coding region input table
         # dealing with lack of coverage within regions of the protein
         # #$codreg{Chr name}{ProteinName}{"Beg"}
         my $beg=$codreg{$target}{$prot}{"Beg"};
