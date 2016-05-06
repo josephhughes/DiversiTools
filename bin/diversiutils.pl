@@ -13,7 +13,8 @@
 # perl diversiutils.pl -bam test/S3_refHPAI_cons_stampy.bam -ref test/refHPAI_cons.fa -stub out
 # option to include an orf file which will provide information about the amino acids
 # ./diversiutils.pl -bam test/S3_refHPAI_cons_stampy.bam -ref test/refHPAI_cons.fa -orf test/Coding.regions.HPAI.txt
-# ignores Ns in reads (not the whole read)
+# counts the Ns in the  reads and Ns are taken into account in the coverage
+# CDS can be on the reverse stand of the reference.
 
 use strict;
 use Getopt::Long; 
@@ -85,10 +86,18 @@ if ($orfs){
         push(@proteins,$elements[0]);
         $codreg{$elements[3]}{$elements[0]}{"Beg"}=$elements[1];#$codreg{Chr name}{ProteinName}{"Beg"}
         $codreg{$elements[3]}{$elements[0]}{"End"}=$elements[2];
-        my $codlength=$elements[2]-$elements[1]+1;
-        my $mod = $codlength % 3;
-        if ($mod ne 0){
-          die "Error: The coding sequence for $elements[0] is not a multiple of 3\n";
+        if ($elements[1]<$elements[2]){
+          my $codlength=$elements[2]-$elements[1]+1;
+          my $mod = $codlength % 3;
+          if ($mod ne 0){
+            die "Error: The coding sequence for $elements[0] is not a multiple of 3\n";
+          }
+        }elsif ($elements[2]<$elements[1]){
+          my $codlength=$elements[2]-$elements[1]-1;
+          my $mod = $codlength % 3;
+          if ($mod ne 0){
+            die "Error: The coding sequence for $elements[0] is not a multiple of 3\n";
+          }
         }
       }
     }
@@ -268,63 +277,119 @@ foreach my $target (@targets){
               if ($orfs){
                 #$codreg{Chr name}{ProteinName}{"Beg"}
                 foreach my $prot (keys %{$codreg{$target}}){
-                  my $noUTR=($site-$codreg{$target}{$prot}{"Beg"})+1;
-                  my ($aasite,$mod);
-                    if ($noUTR==1){
-                      $mod=1;
-                    }elsif ($noUTR>1){
-                      $mod = $noUTR % 3;
+                  #check here that Beg<End
+                  if ($codreg{$target}{$prot}{"Beg"}<$codreg{$target}{$prot}{"End"}){
+					  my $noUTR=($site-$codreg{$target}{$prot}{"Beg"})+1;
+					  my ($aasite,$mod);
+						if ($noUTR==1){
+						  $mod=1;
+						}elsif ($noUTR>1){
+						  $mod = $noUTR % 3;
+						}
+						# check that the site is in a coding region, that it is the first codon position of the coding region and that the read is long enough for final codon
+						if ($site>=$codreg{$target}{$prot}{"Beg"} && $site<=$codreg{$target}{$prot}{"End"} && $mod==1 && $i<(scalar(@bases)-2)){
+						  #print "$prot\t$target\tCoding region for $prot Site $site and Modular $mod\n";
+						  my $rcodon=$refbases[$i].$refbases[$i+1].$refbases[$i+2];
+						  my $qcodon=$bases[$i].$bases[$i+1].$bases[$i+2];
+						  #ignore AA if 
+						  my $raa= $c2p{uc($rcodon)};
+						  my $qaa= $c2p{uc($qcodon)};
+						  #print "$rcodon\t$qcodon\n";
+						  #nucsite aasite $rcodon $raa $qcodon $qaa $codonposmis
+						  if ($noUTR==1){
+							$aasite=1;
+						  }else{
+							$aasite = ($noUTR+3-$mod)/3;
+							#print "No UTR $noUTR modular $mod $aasite\n";
+						  }
+						  # the position of the mutation
+						  # Sample\tChr\tAAPosition\tRefAA\tRefCodon\tCntNonSyn\tCntSyn\tTopAA\tTopAAcnt\tSndAA\tSndAAcnt\tTrdAA\tTrdAAcnt\tAAcoverage\tNbStop
+						  $aafreq{$target}{$prot}{$aasite}{"AAcoverage"}++;#this will provide the coverage
+						  #print $aasite."\t".$aafreq{$target}{$prot}{$aasite}{"AAcoverage"}."\t".$aafreq{$target}{$prot}{$aasite}{"RefAA"}."\t$target\t$prot\t$rcodon\t$raa\t$qcodon\t$qaa\n";
+						  $aaorder{$target}{$prot}{$aasite}{$qaa}++;
+						  $aafreq{$target}{$prot}{$aasite}{"RefAA"}=$raa;
+						  #print $aafreq{$target}{$prot}{$aasite}{"RefAA"}."\t>$target<\t>$prot<>$aasite<\n";
+						  $aafreq{$target}{$prot}{$aasite}{"RefCodon"}=$rcodon;
+						  $aafreq{$target}{$prot}{$aasite}{"RefSite"}=$site;
+						  my $aamut=$raa.$aasite.$qaa;
+						  if (uc($rcodon) ne uc($qcodon)){
+						  # the syn and non-syn counts only refer to codons where there are changes
+						  # i.e. when the codon is the same as the reference, this is not counted as being a non-synonymous count
+						  # the count for syn and non-syn is the number of changes relative to the reference codon, this can range from 1-3
+							if(uc($raa) eq uc($qaa)){
+							  my $mm=mismatch_count($rcodon,$qcodon);
+							  $aafreq{$target}{$prot}{$aasite}{"syn"}+=$mm;
+							}if(uc($raa) ne uc($qaa)){
+							  my $mm=mismatch_count($rcodon,$qcodon);
+							  $aafreq{$target}{$prot}{$aasite}{"nonsyn"}+=$mm;
+							}if(uc($qaa)=~/\*/){
+							  $stopfreq{$target}{$prot}{$aasite}{$strand}++;
+							  $aafreq{$target}{$prot}{$aasite}{"stop"}++;
+							}if($refbases[$i] ne $bases[$i]){
+							  $aafreq{$target}{$prot}{$aasite}{"firstcodonpos"}++;
+							}if($refbases[$i+1] ne $bases[$i+1]){
+							  $aafreq{$target}{$prot}{$aasite}{"secondcodonpos"}++;
+							}if($refbases[$i+2] ne $bases[$i+2]){
+							  $aafreq{$target}{$prot}{$aasite}{"thirdcodonpos"}++;
+							}
+						  }
+						}
+                    }if ($codreg{$target}{$prot}{"Beg"}>$codreg{$target}{$prot}{"End"}){# CDS on the reverse strand
+                      
+                      my $noUTR=($site-$codreg{$target}{$prot}{"End"})+1;
+					  my ($aasite,$mod);
+						if ($noUTR==1){
+						  $mod=1;
+						}elsif ($noUTR>1){
+						  $mod = $noUTR % 3;
+						}
+						# check that the site is in a coding region, that it is the first codon position of the coding region and that the read is long enough for final codon
+						if ($site>=$codreg{$target}{$prot}{"End"} && $site<=$codreg{$target}{$prot}{"Beg"} && $mod==1 && $i<(scalar(@bases)-2)){
+						  #print "$target Proteins $prot in the negative strand ".$codreg{$target}{$prot}{"Beg"}." - ".$codreg{$target}{$prot}{"End"}." have not been fully tested Site $site Position in read $i \n";
+						  my $rcodon=&revcomp($refbases[$i].$refbases[$i+1].$refbases[$i+2]);
+						  my $qcodon=&revcomp($bases[$i].$bases[$i+1].$bases[$i+2]);
+						  my $raa= $c2p{uc($rcodon)};
+						  my $qaa= $c2p{uc($qcodon)};
+						  #print "$rcodon\t$qcodon\n";
+						  #nucsite aasite $rcodon $raa $qcodon $qaa $codonposmis
+						  if ($noUTR==1){#this corresponds to the last amino acid in the sequence
+							$aasite=($codreg{$target}{$prot}{"Beg"}-$codreg{$target}{$prot}{"End"}-1)/3;
+							#print "Last site $aasite\n";
+						  }else{# if it is not the last amino acid then we calculate the aa position based on the distance of the site from the beginning of the protein
+							$aasite = ($codreg{$target}{$prot}{"Beg"}-$site+1) / 3;
+							#print "No UTR $noUTR modular $mod Nucsite ".$site+2." AAsite $aasite\n";
+						  }
+						  $aafreq{$target}{$prot}{$aasite}{"AAcoverage"}++;#this will provide the coverage
+						  $aaorder{$target}{$prot}{$aasite}{$qaa}++;
+						  $aafreq{$target}{$prot}{$aasite}{"RefAA"}=$raa;
+						  $aafreq{$target}{$prot}{$aasite}{"RefCodon"}=$rcodon;
+						  $aafreq{$target}{$prot}{$aasite}{"RefSite"}=$site+2;# plus 2 because we want the first position of the codon and the CDS is in reverse direction
+						  my $aamut=$raa.$aasite.$qaa;
+						  if (uc($rcodon) ne uc($qcodon)){
+						  # the syn and non-syn counts only refer to codons where there are changes
+						  # i.e. when the codon is the same as the reference, this is not counted as being a non-synonymous count
+						  # the count for syn and non-syn is the number of changes relative to the reference codon, this can range from 1-3
+							if(uc($raa) eq uc($qaa)){
+							  my $mm=mismatch_count($rcodon,$qcodon);
+							  $aafreq{$target}{$prot}{$aasite}{"syn"}+=$mm;
+							}if(uc($raa) ne uc($qaa)){
+							  my $mm=mismatch_count($rcodon,$qcodon);
+							  $aafreq{$target}{$prot}{$aasite}{"nonsyn"}+=$mm;
+							}if(uc($qaa)=~/\*/){
+							  $stopfreq{$target}{$prot}{$aasite}{$strand}++;
+							  $aafreq{$target}{$prot}{$aasite}{"stop"}++;
+							}if($refbases[$i] ne $bases[$i]){
+							  $aafreq{$target}{$prot}{$aasite}{"firstcodonpos"}++;
+							}if($refbases[$i+1] ne $bases[$i+1]){
+							  $aafreq{$target}{$prot}{$aasite}{"secondcodonpos"}++;
+							}if($refbases[$i+2] ne $bases[$i+2]){
+							  $aafreq{$target}{$prot}{$aasite}{"thirdcodonpos"}++;
+							}
+						  }
+						}
                     }
-                    # check that the site is in a coding region, that it is the first codon position of the coding region and that the read is long enough for final codon
-                    if ($site>=$codreg{$target}{$prot}{"Beg"} && $site<=$codreg{$target}{$prot}{"End"} && $mod==1 && $i<(scalar(@bases)-2)){
-                      #print "$prot\t$target\tCoding region for $prot Site $site and Modular $mod\n";
-                      my $rcodon=$refbases[$i].$refbases[$i+1].$refbases[$i+2];
-                      my $qcodon=$bases[$i].$bases[$i+1].$bases[$i+2];
-                      #ignore AA if 
-                      my $raa= $c2p{uc($rcodon)};
-                      my $qaa= $c2p{uc($qcodon)};
-                      #print "$rcodon\t$qcodon\n";
-                      #nucsite aasite $rcodon $raa $qcodon $qaa $codonposmis
-                      if ($noUTR==1){
-                        $aasite=1;
-                      }else{
-                        $aasite = ($noUTR+3-$mod)/3;
-                        #print "No UTR $noUTR modular $mod $aasite\n";
-                      }
-                      # the position of the mutation
-                      # Sample\tChr\tAAPosition\tRefAA\tRefCodon\tCntNonSyn\tCntSyn\tTopAA\tTopAAcnt\tSndAA\tSndAAcnt\tTrdAA\tTrdAAcnt\tAAcoverage\tNbStop
-                      $aafreq{$target}{$prot}{$aasite}{"AAcoverage"}++;#this will provide the coverage
-                      #print $aasite."\t".$aafreq{$target}{$prot}{$aasite}{"AAcoverage"}."\t".$aafreq{$target}{$prot}{$aasite}{"RefAA"}."\t$target\t$prot\t$rcodon\t$raa\t$qcodon\t$qaa\n";
-                      $aaorder{$target}{$prot}{$aasite}{$qaa}++;
-                      $aafreq{$target}{$prot}{$aasite}{"RefAA"}=$raa;
-                      #print $aafreq{$target}{$prot}{$aasite}{"RefAA"}."\t>$target<\t>$prot<>$aasite<\n";
-                      $aafreq{$target}{$prot}{$aasite}{"RefCodon"}=$rcodon;
-                      $aafreq{$target}{$prot}{$aasite}{"RefSite"}=$site;
-                      my $aamut=$raa.$aasite.$qaa;
-                      if (uc($rcodon) ne uc($qcodon)){
-                      # the syn and non-syn counts only refer to codons where there are changes
-                      # i.e. when the codon is the same as the reference, this is not counted as being a non-synonymous count
-                      # the count for syn and non-syn is the number of changes relative to the reference codon, this can range from 1-3
-                        if(uc($raa) eq uc($qaa)){
-                          my $mm=mismatch_count($rcodon,$qcodon);
-                          $aafreq{$target}{$prot}{$aasite}{"syn"}+=$mm;
-                        }if(uc($raa) ne uc($qaa)){
-                          my $mm=mismatch_count($rcodon,$qcodon);
-                          $aafreq{$target}{$prot}{$aasite}{"nonsyn"}+=$mm;
-                        }if(uc($qaa)=~/\*/){
-                          $stopfreq{$target}{$prot}{$aasite}{$strand}++;
-                          $aafreq{$target}{$prot}{$aasite}{"stop"}++;
-                        }if($refbases[$i] ne $bases[$i]){
-                          $aafreq{$target}{$prot}{$aasite}{"firstcodonpos"}++;
-                        }if($refbases[$i+1] ne $bases[$i+1]){
-                          $aafreq{$target}{$prot}{$aasite}{"secondcodonpos"}++;
-                        }if($refbases[$i+2] ne $bases[$i+2]){
-                          $aafreq{$target}{$prot}{$aasite}{"thirdcodonpos"}++;
-                        }
-                      }
-                    }
-                  }
-                }
+                  }#for each protein loop
+                }# end of orfs IF statement
                 $site=$site+1;
                 $readpos=$readpos+1;
                 $refpos=$refpos+1;
@@ -418,10 +483,6 @@ foreach my $gene (keys %refseq){
       my $strandbias="A$Aplus".":$Aneg;"."C$Cplus".":$Cneg;"."T$Tplus".":$Tneg;"."G$Gplus".":$Gneg";
 
       my ($cntA,$cntC,$cntT,$cntG,$cntN);
-#       if ($basefreq{$bam}{$gene}{$site}{1}{"A"} || $basefreq{$bam}{$gene}{$site}{-1}{"A"}){ $cntA = $basefreq{$bam}{$gene}{$site}{1}{"A"}+$basefreq{$bam}{$gene}{$site}{-1}{"A"}}else{$cntA=0}
-#       if ($basefreq{$bam}{$gene}{$site}{1}{"C"} || $basefreq{$bam}{$gene}{$site}{-1}{"C"}){ $cntC = $basefreq{$bam}{$gene}{$site}{1}{"C"}+$basefreq{$bam}{$gene}{$site}{-1}{"C"}}else{$cntC=0}
-#       if ($basefreq{$bam}{$gene}{$site}{1}{"T"} || $basefreq{$bam}{$gene}{$site}{-1}{"T"}){ $cntT = $basefreq{$bam}{$gene}{$site}{1}{"T"}+$basefreq{$bam}{$gene}{$site}{-1}{"T"}}else{$cntT=0}
-#       if ($basefreq{$bam}{$gene}{$site}{1}{"G"} || $basefreq{$bam}{$gene}{$site}{-1}{"G"}){ $cntG = $basefreq{$bam}{$gene}{$site}{1}{"G"}+$basefreq{$bam}{$gene}{$site}{-1}{"G"}}else{$cntG=0}
       $cntA=$Aplus+$Aneg;
       $cntC=$Cplus+$Cneg;
       $cntT=$Tplus+$Tneg;
@@ -521,16 +582,13 @@ if ($orfs){
   open (AA, ">$stub\_AA.txt")||die "can't open $stub\_AA.txt\n";
   # the position of the mutation
   print AA "Sample\tChr\tProtein\tAAPosition\tRefAA\tRefSite\tRefCodon\tFstCodonPos\tSndCodonPos\tTrdCodonPos\tCntNonSyn\tCntSyn\tNbStop\tTopAA\tTopAAcnt\tSndAA\tSndAAcnt\tTrdAA\tTrdAAcnt\tAAcoverage\n";
-    #foreach my $target (keys %aafreq){
     foreach my $target (keys %codreg){
-      #foreach my $prot (keys %{$aafreq{$target}}){
-      #foreach my $prot (keys %{$codreg{$target}}){
       foreach my $prot (@proteins){  #to provide the output in the same order as the coding region input table
         # dealing with lack of coverage within regions of the protein
         # #$codreg{Chr name}{ProteinName}{"Beg"}
         my $beg=$codreg{$target}{$prot}{"Beg"};
         my $end=$codreg{$target}{$prot}{"End"};
-        my $aacnt=($end-$beg)/3;
+        my $aacnt=abs(($end-$beg)/3);
         #foreach my $aasite (sort {$a<=>$b} keys %{$aafreq{$target}{$prot}}){
         for (my $aasite=1; $aasite<=$aacnt; $aasite++){
           if (defined $aafreq{$target}{$prot}{$aasite}{"RefAA"}){
@@ -626,4 +684,15 @@ sub cntTsTv{
   }
   #print "$refbase A:$Acnt T:$Tcnt G:$Gcnt C:$Ccnt Transition:$Ts Transversion:$Tv\n";
   return($Ts,$Tv);
+}
+
+sub revcomp {
+        my $dna = shift;
+
+        # reverse the DNA sequence
+        my $revcomp = reverse($dna);
+
+        # complement the reversed DNA sequence
+        $revcomp =~ tr/ATGCatgcNn/TACGtacgNn/;
+        return $revcomp;
 }
