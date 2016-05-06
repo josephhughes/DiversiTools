@@ -84,6 +84,11 @@ if ($orfs){
         my @elements=split(/\t/,$_);
         $codreg{$elements[3]}{$elements[0]}{"Beg"}=$elements[1];#$codreg{Chr name}{ProteinName}{"Beg"}
         $codreg{$elements[3]}{$elements[0]}{"End"}=$elements[2];
+        my $codlength=$elements[2]-$elements[1]+1;
+        my $mod = $codlength % 3;
+        if ($mod ne 0){
+          die "Error: The coding sequence for $elements[0] is not a multiple of 3\n";
+        }
       }
     }
     # from PAL2NAL
