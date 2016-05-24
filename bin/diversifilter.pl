@@ -32,7 +32,9 @@ my ($in, $help);
            );
 
 if (($help)&&!($help)||!($in)){
-  print "Usage : perl diversifilter.pl -in out -pQ 0.05 -pS 0.05 -stub out_filtered \n";
+  print "Usage: perl diversifilter.pl -in out -pQ 0.05 -pS 0.05 -stub out_filtered \n";
+  print "Usage for mac compiled version: diversifilter_macosx -in out -pQ 0.05 -pS 0.05 -stub out_filtered \n";
+  print "Usage for linux compiled version: diversifilter_linux -in out -pQ 0.05 -pS 0.05 -stub out_filtered \n";
   print " -in <txt>  - the stub of a diversitool output\n";
   print " -pQ <txt>  - the quality cut-off for a base (default 0.05)\n";
   print " -pS <txt> - the p-value cut-off for strand-bias (default 0.05)\n";

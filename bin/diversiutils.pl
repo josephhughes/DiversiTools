@@ -37,7 +37,9 @@ my $stub="output";
            );
 
 if (($help)&&!($help)||!($bam)||!($ref)){
-  print "Usage : perl btcutils.pl -bam input.bam -ref ref.fa -out stub \n";
+  print "Usage: perl diversiutils.pl -bam input.bam -ref ref.fa -out stub \n";
+  print "Usage for the mac compiled version: diversiutils_macosx -bam input.bam -ref ref.fa -out stub \n";
+  print "Usage for the linux compiled version: diversiutils_linux -bam input.bam -ref ref.fa -out stub \n";
   print " -bam <txt>  - the input a file in bam format\n";
   print " -ref <txt>  - the reference fasta file\n";
   print " -orfs <txt> - text tab-delimited file with Protein,Beginning,End,Reference(Chr) of the coding sequence [optional: only if you want information about dN/dS and aa frequencies etc...]\n";
