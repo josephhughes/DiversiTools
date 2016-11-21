@@ -37,6 +37,12 @@ my $stub="output";
            );
 
 if (($help)&&!($help)||!($bam)||!($ref)){
+  print " _____  _                    _ _______          _           \n";
+  print "|  __ \\(_)                  (_)__   __|        | |          \n";
+  print "| |  | |___   _____ _ __ ___ _   | | ___   ___ | |___       \n";
+  print "| |  | | \\ \\ / / _ \\ '__/ __| |  | |/ _ \\ / _ \\| / __|  \n";
+  print "| |__| | |\\ V /  __/ |  \\__ \\ |  | | (_) | (_) | \\__ \\ \n";
+  print "|_____/|_| \\_/ \\___|_|  |___/_|  |_|\\___/ \\___/|_|___/  \n\n";
   print "Usage: perl diversiutils.pl -bam input.bam -ref ref.fa -out stub \n";
   print "Usage for the mac compiled version: diversiutils_macosx -bam input.bam -ref ref.fa -out stub \n";
   print "Usage for the linux compiled version: diversiutils_linux -bam input.bam -ref ref.fa -out stub \n";
