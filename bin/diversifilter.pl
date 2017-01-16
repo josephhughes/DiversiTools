@@ -143,8 +143,11 @@ for my $sample (keys %table){
       if ($table{$sample}{$chr}{$position}{"Coverage"}>0){
         foreach my $nuc (@nuc){
           my $nucnt=$Acnt+$Ccnt+$Gcnt+$Tcnt;
-          my $p = $nucnt / $table{$sample}{$chr}{$position}{"Coverage"};
-          if($nucnt > 0){
+          # not checked yet, looks wrong
+          #my $p = $nucnt / $table{$sample}{$chr}{$position}{"Coverage"};
+          my $p = $nuc / $nucnt;
+          # changed nucnt to nuc
+          if($nuc > 0){
             $shannon += -$p*log($p);#natural log, i.e. log base e
           }
         }   
