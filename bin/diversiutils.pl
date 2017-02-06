@@ -16,6 +16,9 @@
 # counts the Ns in the  reads and Ns are taken into account in the coverage
 # CDS can be on the reverse stand of the reference.
 
+# Modified 06-02-2017 : check NonRefCnt, changed refbase to upper case
+
+
 use strict;
 use Getopt::Long; 
 use Bio::DB::Sam;
@@ -517,8 +520,8 @@ foreach my $gene (keys %refseq){
       }   
       $nbsites++;
       $sumentropy=$sumentropy+$shannon{$gene}{$site};
-      my $refbase=$refbase{$gene}{$site};
-      my $nonrefcnt=$coverage-($basefreq{$gene}{$site}{1}{$refbase})-($basefreq{$gene}{$site}{-1}{$refbase});
+      my $refbase=uc($refbase{$gene}{$site});  # modified to upper case 2017-02-06
+      my $nonrefcnt=$coverage-($basefreq{$gene}{$site}{1}{$refbase})-($basefreq{$gene}{$site}{-1}{$refbase}); 
       my ($Ts,$Tv) = cntTsTv($refbase,$cntA,$cntT,$cntG,$cntC);
       my $NucOrderPlus="";
       my $NucOrderNeg="";
@@ -539,22 +542,10 @@ foreach my $gene (keys %refseq){
       #print "$site $refbase $NucOrder\n";	
       # get the cnt of insertion and mode and for deletions
       my ($del_cnt,$ins_cnt,$freq_ins,$freq_del);
-#       if (keys %{$delfreq{$gene}{$site}}){
-#         for my $del (sort {$delfreq{$gene}{$site}{$b} <=> $delfreq{$gene}{$site}{$a}} keys %{$delfreq{$gene}{$site}}){
-#           print "DELETION $gene $site $del $delfreq{$gene}{$site}{$del}\n";
-#         }
-#       }
-#       if (keys %{$insfreq{$gene}{$site}}){
-#         for my $ins (sort {$insfreq{$gene}{$site}{$b} <=> $insfreq{$gene}{$site}{$a}} keys %{$insfreq{$gene}{$site}}){
-#           print "INSERT $gene $site $ins $insfreq{$gene}{$site}{$ins}\n";
-#         }
-#       }
-      
+
       if (keys %{$delfreq{$gene}{$site}}){ $del_cnt= sum values %{$delfreq{$gene}{$site}}}else{$del_cnt="<NA>"}
       if (keys %{$insfreq{$gene}{$site}}){ $ins_cnt= sum values %{$insfreq{$gene}{$site}}}else{$ins_cnt="<NA>"}
       # most frequently found insertion and deletion
-      #my $freq_ins = &largest_value_mem(%{$insfreq{$gene}{$site}});
-      #my $freq_del = &largest_value_mem(%{$delfreq{$gene}{$site}});
       if (keys %{$insfreq{$gene}{$site}}){$freq_ins = (sort {$insfreq{$gene}{$site}{$b} <=> $insfreq{$gene}{$site}{$a}} keys %{$insfreq{$gene}{$site}})[0]}else{$freq_ins="<NA>"};
       if (keys %{$delfreq{$gene}{$site}}){$freq_del = (sort {$delfreq{$gene}{$site}{$b} <=> $delfreq{$gene}{$site}{$a}} keys %{$delfreq{$gene}{$site}})[0]}else{$freq_del ="<NA>"};
       print OUT "$bam\t$gene\t$site\t".uc($refbase)."\t$coverage\t$average_p\t$cntA\t".$prob{"A"}."\t$cntC\t".$prob{"C"}."\t$cntT\t".$prob{"T"}."\t$cntG\t".$prob{"G"}."\t";
