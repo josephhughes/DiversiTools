@@ -17,7 +17,8 @@
 # CDS can be on the reverse stand of the reference.
 
 # Modified 06-02-2017 : check NonRefCnt, changed refbase to upper case
-
+# Change reference to uppercase and convert IUPAC to N: this needs to be done for the input reference and the reference in the bam
+# This affects the CntRef value in the table, N could code for A,C,T,G so most bases will be matching to ref 
 
 use strict;
 use Getopt::Long; 
@@ -76,7 +77,11 @@ while( my $seq = $seq_in->next_seq() ) {
     my @refbases=split(//,$seq_str);
     for (my $i=0; $i<scalar(@refbases); $i++){
       my $site=1+$i;
-      $refseq{$id}{$site}=$refbases[$i];
+      if ($refbases[$i]=~/A|C|T|G|N/i){
+        $refseq{$id}{$site}=uc($refbases[$i]);
+      }else{
+        $refseq{$id}{$site}="N";
+      }
     }
   }else{
     print "$id is not in the bam file\n";
@@ -205,6 +210,8 @@ foreach my $target (@targets){
       my $query_start = $a->query->start;     
       my $query_end   = $a->query->end;
       my $ref_dna   = $a->dna;        # reference sequence bases
+      # in the reference sequence substitute all non-ATGC for N
+      ($ref_dna=uc($ref_dna))=~s/[^ACTG]/N/g;
       my $query_dna = $a->query->dna; # query sequence bases
       my @scores    = $a->qscore;     # per-base quality scores
       my $match_qual= $a->qual;       # quality of the match
@@ -238,7 +245,7 @@ foreach my $target (@targets){
               # chromosome site nuc 
               #print "For loop $site $readpos $i\n";
               #print "$site\t$readpos\n";
-              $basefreq{$target}{$site}{$strand}{$bases[$i]}++;
+              $basefreq{$target}{$site}{$strand}{uc($bases[$i])}++;
               #print "$bam\t$target\t$site\t$bases[$i]\t$basefreq{$bam}{$target}{$site}{$bases[$i]}\n"; 
               $refbase{$target}{$site}=$refbases[$i];
               my $P = 10**(-$scores[$i]/10);
@@ -249,7 +256,7 @@ foreach my $target (@targets){
               }
               # create a hash for the read information (position of mismatches relative to the start position of a read and motifs upstream and downstream of a mismatch)
               $readinfo{$readpos+1}{"AvQual"}=$readinfo{$readpos+1}{"AvQual"}+$P;
-              if ($refbases[$i]=~/$bases[$i]/i){
+              if ($refbases[$i]=~/$bases[$i]|N/i){ # adding the case where there is an N in the reference
                 $readinfo{$readpos+1}{"CntRef"}++;
                 $readinfo{$readpos+1}{"AvQualRef"}=$readinfo{$readpos+1}{"AvQualRef"}+$P;
               }elsif ($refbases[$i]!~/$bases[$i]/i){ 
@@ -284,6 +291,8 @@ foreach my $target (@targets){
 #                     print MOTIF ">$name\_$mismatches\n$motif\n";
 #                   }
 #                }
+              }elsif ($bases[$i]=~/N/i){
+                $readinfo{$readpos+1}{"CntNs"}++;
               }
               if ($orfs){
                 #$codreg{Chr name}{ProteinName}{"Beg"}
@@ -521,7 +530,15 @@ foreach my $gene (keys %refseq){
       $nbsites++;
       $sumentropy=$sumentropy+$shannon{$gene}{$site};
       my $refbase=uc($refbase{$gene}{$site});  # modified to upper case 2017-02-06
-      my $nonrefcnt=$coverage-($basefreq{$gene}{$site}{1}{$refbase})-($basefreq{$gene}{$site}{-1}{$refbase}); 
+      my $nonrefcnt;
+      if ($refbase=~/N/i){
+        $nonrefcnt=$coverage-($basefreq{$gene}{$site}{1}{"A"})-($basefreq{$gene}{$site}{-1}{"A"}); 
+        $nonrefcnt=$nonrefcnt-($basefreq{$gene}{$site}{1}{"C"})-($basefreq{$gene}{$site}{-1}{"C"}); 
+        $nonrefcnt=$nonrefcnt-($basefreq{$gene}{$site}{1}{"T"})-($basefreq{$gene}{$site}{-1}{"T"}); 
+        $nonrefcnt=$nonrefcnt-($basefreq{$gene}{$site}{1}{"G"})-($basefreq{$gene}{$site}{-1}{"G"}); 
+      }else{
+        $nonrefcnt=$coverage-($basefreq{$gene}{$site}{1}{$refbase})-($basefreq{$gene}{$site}{-1}{$refbase}); 
+      }
       my ($Ts,$Tv) = cntTsTv($refbase,$cntA,$cntT,$cntG,$cntC);
       my $NucOrderPlus="";
       my $NucOrderNeg="";
@@ -590,7 +607,7 @@ if ($orfs){
         my $aacnt=abs(($end-$beg)/3);
         #foreach my $aasite (sort {$a<=>$b} keys %{$aafreq{$target}{$prot}}){
         for (my $aasite=1; $aasite<=$aacnt; $aasite++){
-          if (defined $aafreq{$target}{$prot}{$aasite}{"RefAA"}){
+         if (defined $aafreq{$target}{$prot}{$aasite}{"RefAA"}){
           print AA "$bam\t$target\t$prot\t$aasite\t";
           
           print AA $aafreq{$target}{$prot}{$aasite}{"RefAA"}."\t";
@@ -620,7 +637,7 @@ if ($orfs){
           }
           print AA $aafreq{$target}{$prot}{$aasite}{"AAcoverage"}."\n";
         }else{# close if statement
-          print AA "$bam\t$target\t$prot\t$aasite\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t0\n";
+          print AA "$bam\t$target\t$prot\t$aasite\t<NA>\t".$aafreq{$target}{$prot}{$aasite}{"RefSite"}."\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t".$aafreq{$target}{$prot}{$aasite}{"AAcoverage"}."\n";
         }
         }
       }
