@@ -9,8 +9,8 @@ HA	22	1716	HA_Influenza
 NP	46	1539	NP_Influenza
 NA	21	1364	NA_Influenza
 M1	26	784	M_Influenza
-M2_A	26	51	M_Influenza
-M2_B	740	1007	M_Influenza
+M2_A	26	52	M_Influenza
+M2_B	741	1007	M_Influenza
 NS1	27	701	NS_Influenza
 NS2_A	27	56	NS_Influenza
 NS2_B	529	864	NS_Influenza
