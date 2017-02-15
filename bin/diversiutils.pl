@@ -30,7 +30,7 @@ use List::Util 'sum'; # for counting the values in the inserfreq and delfreq has
 # global variables
 my ($bam, $ref, $orfs,$help);
 my (%basefreq,%refbase,%cumulqual,%readinfo,%delfreq,%insfreq,%readmis);# data storing 
-my (%aafreq,%aaorder,%stopfreq);# storing of AA info
+my (%aafreq,%aaorder,%stopfreq,%codonfreq);# storing of AA info
 my $stub="output";
 
 &GetOptions(
@@ -327,6 +327,7 @@ foreach my $target (@targets){
 						  $aafreq{$target}{$prot}{$aasite}{"AAcoverage"}++;#this will provide the coverage
 						  #print $aasite."\t".$aafreq{$target}{$prot}{$aasite}{"AAcoverage"}."\t".$aafreq{$target}{$prot}{$aasite}{"RefAA"}."\t$target\t$prot\t$rcodon\t$raa\t$qcodon\t$qaa\n";
 						  $aaorder{$target}{$prot}{$aasite}{$qaa}++;
+						  $codonfreq{$target}{$prot}{$aasite}{$qcodon}++;
 						  $aafreq{$target}{$prot}{$aasite}{"RefAA"}=$raa;
 						  #print $aafreq{$target}{$prot}{$aasite}{"RefAA"}."\t>$target<\t>$prot<>$aasite<\n";
 						  $aafreq{$target}{$prot}{$aasite}{"RefCodon"}=$rcodon;
@@ -381,6 +382,7 @@ foreach my $target (@targets){
 						  }
 						  $aafreq{$target}{$prot}{$aasite}{"AAcoverage"}++;#this will provide the coverage
 						  $aaorder{$target}{$prot}{$aasite}{$qaa}++;
+						  $codonfreq{$target}{$prot}{$aasite}{$qcodon}++;
 						  $aafreq{$target}{$prot}{$aasite}{"RefAA"}=$raa;
 						  $aafreq{$target}{$prot}{$aasite}{"RefCodon"}=$rcodon;
 						  $aafreq{$target}{$prot}{$aasite}{"RefSite"}=$site+2;# plus 2 because we want the first position of the codon and the CDS is in reverse direction
@@ -597,7 +599,7 @@ foreach my $readpos (sort {$a<=>$b} keys %readinfo){
 if ($orfs){
   open (AA, ">$stub\_AA.txt")||die "can't open $stub\_AA.txt\n";
   # the position of the mutation
-  print AA "Sample\tChr\tProtein\tAAPosition\tRefAA\tRefSite\tRefCodon\tFstCodonPos\tSndCodonPos\tTrdCodonPos\tCntNonSyn\tCntSyn\tNbStop\tTopAA\tTopAAcnt\tSndAA\tSndAAcnt\tTrdAA\tTrdAAcnt\tAAcoverage\n";
+  print AA "Sample\tChr\tProtein\tAAPosition\tRefAA\tRefSite\tRefCodon\tFstCodonPos\tSndCodonPos\tTrdCodonPos\tCntNonSyn\tCntSyn\tNbStop\tTopAA\tTopAAcnt\tSndAA\tSndAAcnt\tTrdAA\tTrdAAcnt\tTopCodon\tTopCodoncnt\tSndCodon\tSndCodoncnt\tTrdCodon\tTrdCodoncnt\tAAcoverage\n";
     foreach my $target (keys %codreg){
       foreach my $prot (@proteins){  #to provide the output in the same order as the coding region input table
         # dealing with lack of coverage within regions of the protein
@@ -630,14 +632,27 @@ if ($orfs){
               print AA "$aa\t$aaorder{$target}{$prot}{$aasite}{$aa}\t";
               $topAAs++;
             }
-          }
+          }          
           while ($topAAs<3){# if there are less than three different AAs
             print AA "<NA>\t<NA>\t";
             $topAAs++;
           }
+          my $topCodons=0;
+          foreach my $codon (sort { $codonfreq{$target}{$prot}{$aasite}{$b} <=> $codonfreq{$target}{$prot}{$aasite}{$a} } keys %{$codonfreq{$target}{$prot}{$aasite}}) {
+            if ($topCodons<3){# provide the top three AAs and their counts
+              print AA "$codon\t$codonfreq{$target}{$prot}{$aasite}{$codon}\t";
+              $topCodons++;
+            }
+          }
+          while ($topCodons<3){# if there are less than three different codons
+            print AA "<NA>\t<NA>\t";
+            $topCodons++;
+          }
           print AA $aafreq{$target}{$prot}{$aasite}{"AAcoverage"}."\n";
         }else{# close if statement
-          print AA "$bam\t$target\t$prot\t$aasite\t<NA>\t".$aafreq{$target}{$prot}{$aasite}{"RefSite"}."\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t".$aafreq{$target}{$prot}{$aasite}{"AAcoverage"}."\n";
+          print AA "$bam\t$target\t$prot\t$aasite\t<NA>\t".$aafreq{$target}{$prot}{$aasite}{"RefSite"};
+          print AA "\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t";
+          print AA "\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t".$aafreq{$target}{$prot}{$aasite}{"AAcoverage"}."\n";
         }
         }
       }
