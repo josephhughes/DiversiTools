@@ -60,6 +60,11 @@ if (($help)&&!($help)||!($bam)||!($ref)){
 
 open(LOG,">$stub\_log.txt")||die "Can't open output $stub\_log.txt\n";
 
+# remove indexed reference fasta file
+my $indexref="$ref\.fai";
+if ($indexref){
+  system("rm $indexref");
+}
 # high level API
 my $sam = Bio::DB::Sam->new(-bam  => $bam, -fasta=> $ref);
 my @targets    = $sam->seq_ids;
