@@ -582,8 +582,24 @@ foreach my $gene (keys %refseq){
       print OUT "$shannon{$gene}{$site}\t$nonrefcnt\t$Ts\t$Tv\t$NucOrder\t$strandbias\t$ins_cnt\t$freq_ins\t$del_cnt\t$freq_del\t$cntN\n";
     }else{#there is no coverage for that site in the bam
         #print "No coverage $site\n";
+        my ($del_cnt,$ins_cnt,$freq_ins,$freq_del);# this is for printing the insertion or deletion when there is zero coverage at a site but 100% deletion or 100% insertion or 100% Ns
+        if (keys %{$delfreq{$gene}{$site}}){ $del_cnt= sum values %{$delfreq{$gene}{$site}}}else{$del_cnt="<NA>"}
+        if (keys %{$insfreq{$gene}{$site}}){ $ins_cnt= sum values %{$insfreq{$gene}{$site}}}else{$ins_cnt="<NA>"}
+        # most frequently found insertion and deletion
+        if (keys %{$insfreq{$gene}{$site}}){$freq_ins = (sort {$insfreq{$gene}{$site}{$b} <=> $insfreq{$gene}{$site}{$a}} keys %{$insfreq{$gene}{$site}})[0]}else{$freq_ins="<NA>"};
+        if (keys %{$delfreq{$gene}{$site}}){$freq_del = (sort {$delfreq{$gene}{$site}{$b} <=> $delfreq{$gene}{$site}{$a}} keys %{$delfreq{$gene}{$site}})[0]}else{$freq_del ="<NA>"};
+        my ($Nplus,$Nneg,$cntN);
+        if ($basefreq{$gene}{$site}{1}{"N"}){ $Nplus=$basefreq{$gene}{$site}{1}{"N"}}else{$Nplus=0}
+        if ($basefreq{$gene}{$site}{-1}{"N"}){ $Nneg=$basefreq{$gene}{$site}{-1}{"N"}}else{$Nneg=0}
+        $cntN=$Nplus+$Nneg;
         print OUT "$bam\t$gene\t$site\t".uc($refseq{$gene}{$site})."\t0\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t";
-        print OUT "<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\n";
+        print OUT "<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>";
+        if ($ins_cnt){print OUT "\t$ins_cnt";}else{print OUT "\t<NA>";}
+        if ($freq_ins){print OUT "\t$freq_ins";}else{print OUT "\t<NA>";}
+        if ($del_cnt){print OUT "\t$del_cnt";}else{print OUT "\t<NA>";}
+        if ($freq_del){print OUT "\t$freq_del";}else{print OUT "\t<NA>";}
+        if ($cntN){print OUT "\t$cntN";}else{print OUT "\t<NA>";}
+        print OUT "\n";
     }
   }
   if ($nbsites>0){
