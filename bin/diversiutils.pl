@@ -156,14 +156,14 @@ if ($orfs){
     $c2p{$_} = "Z" for qw(SAA);
     $c2p{$_} = "J" for qw(MTT MTA);
     $c2p{$_} = "B" for qw(AAT AAC GAC GAT RAT RAC);
-    $c2p{$_} = "L" for qw(CTA CTT CTG CTC CTK TTA TTG TTR YTA YTG);
-    $c2p{$_} = "R" for qw(CGA CGT CGC CGG AGG AGA AGR MGA MGG);
-    $c2p{$_} = "S" for qw(TCA TCG TCT TCC AGT AGC AGY);
-    $c2p{$_} = "A" for qw(GCC GCT GCA GCG);
-    $c2p{$_} = "G" for qw(GGC GGT GGA GGG);
-    $c2p{$_} = "P" for qw(CCA CCT CCG CCC);
-    $c2p{$_} = "T" for qw(ACA ACG ACC ACT);
-    $c2p{$_} = "V" for qw(GTA GTC GTG GTT);
+    $c2p{$_} = "L" for qw(CTA CTT CTG CTC CTN CTK TTA TTG TTR YTA YTG);
+    $c2p{$_} = "R" for qw(CGA CGT CGC CGG CGN AGG AGA AGR MGA MGG);
+    $c2p{$_} = "S" for qw(TCA TCG TCT TCC TCN AGT AGC AGY);
+    $c2p{$_} = "A" for qw(GCC GCT GCA GCG GCN);
+    $c2p{$_} = "G" for qw(GGC GGT GGA GGG GGN);
+    $c2p{$_} = "P" for qw(CCA CCT CCG CCC CCN);
+    $c2p{$_} = "T" for qw(ACA ACG ACC ACT ACN);
+    $c2p{$_} = "V" for qw(GTA GTC GTG GTT GTN);
     $c2p{$_} = "I" for qw(ATT ATC ATY ATA ATW);
     #$c2p{$_} = "_" for qw(TAA TAG TAR TGA);
     $c2p{$_} = "*" for qw(TAA TAG TAR TGA);
@@ -178,7 +178,7 @@ if ($orfs){
     $c2p{$_} = "Y" for qw(TAT TAC TAY);
     $c2p{$_} = "M" for qw(ATG);
     $c2p{$_} = "W" for qw(TGG);
-    $c2p{$_} = "X" for qw(...);#TYA CAM
+    $c2p{$_} = "X" for qw(... AAN AGN ANA ANC ANG ANN ANT ATN CAN CNA CNC CNG CNN CNT GAN GNA GNC GNG GNN GNT NAA NAC NAG NAN NAT NCA NCC NCG NCN NCT NGA NGC NGG NGN NGT NNA NNC NNG NNT NTA NTC NTG NTN NTT TAN TGN TNA TNC TNG TNN TNT TTN);#TYA CAM
     foreach my $target (@targets){
       if (!keys %{$codreg{$target}}){
         my @orfIDs=keys %codreg;
@@ -319,6 +319,9 @@ foreach my $target (@targets){
 						  #ignore AA if 
 						  my $raa= $c2p{uc($rcodon)};
 						  my $qaa= $c2p{uc($qcodon)};
+						  if (!$qaa){
+						    print "Error: No translation for codon $qcodon\n"
+						  }
 						  #print "$rcodon\t$qcodon\n";
 						  #nucsite aasite $rcodon $raa $qcodon $qaa $codonposmis
 						  if ($noUTR==1){
@@ -376,6 +379,9 @@ foreach my $target (@targets){
 						  my $qcodon=&revcomp($bases[$i].$bases[$i+1].$bases[$i+2]);
 						  my $raa= $c2p{uc($rcodon)};
 						  my $qaa= $c2p{uc($qcodon)};
+						  if (!$qaa){
+						    print "Error: No translation for codon $qcodon\n"
+						  }						  
 						  #print "$rcodon\t$qcodon\n";
 						  #nucsite aasite $rcodon $raa $qcodon $qaa $codonposmis
 						  if ($noUTR==1){#this corresponds to the last amino acid in the sequence
@@ -660,7 +666,7 @@ if ($orfs){
           print AA $aafreq{$target}{$prot}{$aasite}{"AAcoverage"}."\n";
         }else{# close if statement
           print AA "$bam\t$target\t$prot\t$aasite\t<NA>\t".$aafreq{$target}{$prot}{$aasite}{"RefSite"};
-          print AA "\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t";
+          print AA "\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>";
           print AA "\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t".$aafreq{$target}{$prot}{$aasite}{"AAcoverage"}."\n";
         }
         }
