@@ -261,7 +261,7 @@ foreach my $target (@targets){
               }
               # create a hash for the read information (position of mismatches relative to the start position of a read and motifs upstream and downstream of a mismatch)
               $readinfo{$readpos+1}{"AvQual"}=$readinfo{$readpos+1}{"AvQual"}+$P;
-              if ($refbases[$i]=~/$bases[$i]|N/i){ # adding the case where there is an N in the reference
+              if ($refbases[$i]=~/$bases[$i]|N/i){ # adding the case where there is an N in the reference 
                 $readinfo{$readpos+1}{"CntRef"}++;
                 $readinfo{$readpos+1}{"AvQualRef"}=$readinfo{$readpos+1}{"AvQualRef"}+$P;
               }elsif ($refbases[$i]!~/$bases[$i]/i){ 
@@ -545,10 +545,7 @@ foreach my $gene (keys %refseq){
       my $refbase=uc($refbase{$gene}{$site});  # modified to upper case 2017-02-06
       my $nonrefcnt;
       if ($refbase=~/N/i){
-        $nonrefcnt=$coverage-($basefreq{$gene}{$site}{1}{"A"})-($basefreq{$gene}{$site}{-1}{"A"}); 
-        $nonrefcnt=$nonrefcnt-($basefreq{$gene}{$site}{1}{"C"})-($basefreq{$gene}{$site}{-1}{"C"}); 
-        $nonrefcnt=$nonrefcnt-($basefreq{$gene}{$site}{1}{"T"})-($basefreq{$gene}{$site}{-1}{"T"}); 
-        $nonrefcnt=$nonrefcnt-($basefreq{$gene}{$site}{1}{"G"})-($basefreq{$gene}{$site}{-1}{"G"}); 
+        $nonrefcnt=$coverage-($basefreq{$gene}{$site}{1}{"N"})-($basefreq{$gene}{$site}{-1}{"N"}); # dealing with issues #11
       }else{
         $nonrefcnt=$coverage-($basefreq{$gene}{$site}{1}{$refbase})-($basefreq{$gene}{$site}{-1}{$refbase}); 
       }
