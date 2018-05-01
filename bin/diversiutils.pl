@@ -320,7 +320,7 @@ foreach my $target (@targets){
 						  my $raa= $c2p{uc($rcodon)};
 						  my $qaa= $c2p{uc($qcodon)};
 						  if (!$qaa){
-						    print "Error: No translation for codon $qcodon\n"
+						    #print "Error: No translation for codon $qcodon\n"
 						  }
 						  #print "$rcodon\t$qcodon\n";
 						  #nucsite aasite $rcodon $raa $qcodon $qaa $codonposmis
@@ -340,6 +340,12 @@ foreach my $target (@targets){
 						  #print $aafreq{$target}{$prot}{$aasite}{"RefAA"}."\t>$target<\t>$prot<>$aasite<\n";
 						  $aafreq{$target}{$prot}{$aasite}{"RefCodon"}=$rcodon;
 						  $aafreq{$target}{$prot}{$aasite}{"RefSite"}=$site;
+						  # checking that last AA of the orf is going in hash
+						  if ((($aasite*3)+$codreg{$target}{$prot}{"Beg"}+2) eq $codreg{$target}{$prot}{"End"}){
+						    print "Last AA position is $aasite for protein $prot and coding end is ".$codreg{$target}{$prot}{"End"}." and beg is ".$codreg{$target}{$prot}{"Beg"}."\n";
+						  }
+						  
+						  
 						  my $aamut=$raa.$aasite.$qaa;
 						  if (uc($rcodon) ne uc($qcodon)){
 						  # the syn and non-syn counts only refer to codons where there are changes
@@ -380,13 +386,13 @@ foreach my $target (@targets){
 						  my $raa= $c2p{uc($rcodon)};
 						  my $qaa= $c2p{uc($qcodon)};
 						  if (!$qaa){
-						    print "Error: No translation for codon $qcodon\n"
+						    #print "Error: No translation for codon $qcodon\n"
 						  }						  
 						  #print "$rcodon\t$qcodon\n";
 						  #nucsite aasite $rcodon $raa $qcodon $qaa $codonposmis
 						  if ($noUTR==1){#this corresponds to the last amino acid in the sequence
 							$aasite=($codreg{$target}{$prot}{"Beg"}-$codreg{$target}{$prot}{"End"}-1)/3;
-							#print "Last site $aasite\n";
+							print "Last site $aasite for $prot\n";
 						  }else{# if it is not the last amino acid then we calculate the aa position based on the distance of the site from the beginning of the protein
 							$aasite = ($codreg{$target}{$prot}{"Beg"}-$site+1) / 3;
 							#print "No UTR $noUTR modular $mod Nucsite ".$site+2." AAsite $aasite\n";
@@ -634,7 +640,7 @@ if ($orfs){
         # #$codreg{Chr name}{ProteinName}{"Beg"}
         my $beg=$codreg{$target}{$prot}{"Beg"};
         my $end=$codreg{$target}{$prot}{"End"};
-        my $aacnt=abs(($end-$beg)/3);
+        my $aacnt=abs(($end-($beg-1))/3);
         #foreach my $aasite (sort {$a<=>$b} keys %{$aafreq{$target}{$prot}}){
         for (my $aasite=1; $aasite<=$aacnt; $aasite++){
          if (defined $aafreq{$target}{$prot}{$aasite}{"RefAA"}){
