@@ -341,9 +341,9 @@ foreach my $target (@targets){
 						  $aafreq{$target}{$prot}{$aasite}{"RefCodon"}=$rcodon;
 						  $aafreq{$target}{$prot}{$aasite}{"RefSite"}=$site;
 						  # checking that last AA of the orf is going in hash
-						  if ((($aasite*3)+$codreg{$target}{$prot}{"Beg"}+2) eq $codreg{$target}{$prot}{"End"}){
-						    print "Last AA position is $aasite for protein $prot and coding end is ".$codreg{$target}{$prot}{"End"}." and beg is ".$codreg{$target}{$prot}{"Beg"}."\n";
-						  }
+						  #if ((($aasite*3)+$codreg{$target}{$prot}{"Beg"}+2) eq $codreg{$target}{$prot}{"End"}){
+						  #  print "Last AA position is $aasite for protein $prot and coding end is ".$codreg{$target}{$prot}{"End"}." and beg is ".$codreg{$target}{$prot}{"Beg"}."\n";
+						  #}
 						  
 						  
 						  my $aamut=$raa.$aasite.$qaa;
