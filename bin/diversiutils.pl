@@ -20,6 +20,9 @@
 # Change reference to uppercase and convert IUPAC to N: this needs to be done for the input reference and the reference in the bam
 # This affects the CntRef value in the table, N could code for A,C,T,G so most bases will be matching to ref 
 
+# Modified 22-05-2018 :  adding additional read level stats - count of Ns, Deletins and Insertions
+# Insertion, Deletions and Ns are not used to calculate the total, only the Ref and NonRef substituions are considered.
+
 use strict;
 use Getopt::Long; 
 use Bio::DB::Sam;
@@ -445,12 +448,14 @@ foreach my $target (@targets){
             $delfreq{$target}{$site}{$sub_ref_dna}++;
             $refpos=$refpos+$del_len;
             $site=$site+$del_len;
+            $readinfo{$readpos+1}{"CntDs"}++;
             #print "$cigars[$k] $site $readpos $refpos $sub_ref_dna => deletion\n";
           }if ($cigars[$k]=~/(\d+)I$/){# insertion in the read relative to the reference
             #we want to gather the location and length distribution of these
             my $ins_len=$1;
             my $sub_query_dna = substr($query_dna,$readpos,$ins_len);
             $insfreq{$target}{$site}{$sub_query_dna}++;
+            $readinfo{$readpos+1}{"CntIs"}++;
             $readpos=$readpos+$ins_len;
             #print "$cigars[$k] $site $readpos $refpos $sub_query_dna => insertion\n";
           }if ($cigars[$k]=~/(\d+)N$/){# skipped region from the reference
@@ -613,8 +618,9 @@ foreach my $gene (keys %refseq){
 }
 # Read mismatch table:
 # ReadPos\tCntNonRef\tCntRef\tTotalCnt\tFreq\tAvQual (Freq=NonRef/TotalCnt)
+# Adding a column with the counts of indels at given sites in the read
 open (READ, ">$stub\_read.txt")||die "can't open $stub\_read.txt\n";
-print READ "ReadPos\tCntRef\tCntNonRef\tTotalCnt\tFreq\tAvQual\tAvQualRef\tAvQualNonRef\n";
+print READ "ReadPos\tCntRef\tCntNonRef\tTotalCnt\tFreq\tAvQual\tAvQualRef\tAvQualNonRef\tCntNs\tCntDs\tCntIs\n";
 foreach my $readpos (sort {$a<=>$b} keys %readinfo){
   print READ "$readpos\t";
   my $total = $readinfo{$readpos}{"CntNonRef"}+$readinfo{$readpos}{"CntRef"};
@@ -624,7 +630,11 @@ foreach my $readpos (sort {$a<=>$b} keys %readinfo){
     print READ $total."\t".$readinfo{$readpos}{"CntNonRef"}/$total."\t";
     if ($readinfo{$readpos}{"AvQual"}=~/.+/ & $total>0){ print READ $readinfo{$readpos}{"AvQual"}/$total."\t";}else{print READ "0\t"}
     if ($readinfo{$readpos}{"CntRef"}=~/.+/){print READ $readinfo{$readpos}{"AvQualRef"}/$readinfo{$readpos}{"CntRef"}."\t";}else{print READ "0\t";}
-    if ($readinfo{$readpos}{"CntNonRef"}=~/.+/){print READ $readinfo{$readpos}{"AvQualNonRef"}/$readinfo{$readpos}{"CntNonRef"}."\n";}else{print READ "0\n"}
+    if ($readinfo{$readpos}{"CntNonRef"}=~/.+/){print READ $readinfo{$readpos}{"AvQualNonRef"}/$readinfo{$readpos}{"CntNonRef"}."\t";}else{print READ "0\t"}
+    if ($readinfo{$readpos}{"CntNs"}=~/.+/){print READ $readinfo{$readpos}{"CntNs"}."\t";}else{print READ "0\t"}
+    if ($readinfo{$readpos}{"CntDs"}=~/.+/){print READ $readinfo{$readpos}{"CntDs"}."\t";}else{print READ "0\t"}   
+    if ($readinfo{$readpos}{"CntIs"}=~/.+/){print READ $readinfo{$readpos}{"CntIs"}."\n";}else{print READ "0\n"}
+    
   }else{
     print READ "<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\n";  
   }
