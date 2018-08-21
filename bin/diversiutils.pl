@@ -99,6 +99,8 @@ while( my $seq = $seq_in->next_seq() ) {
 # if an orfs file is specified, read in the coding regions and load the IUPAC info and codon ambiguity code
 my (%codreg, %IUPAC, %c2p, @proteins);
 if ($orfs){
+    #print "$orfs\n";
+    convertNewlines($orfs);
     open (CODING,"<$orfs")||die "Can't open $orfs\n";
     my $firstLine = <CODING>; 
     if ($firstLine !~/Protein\tBeg\tEnd\tReference/){
@@ -185,9 +187,12 @@ if ($orfs){
     foreach my $target (@targets){
       if (!keys %{$codreg{$target}}){
         my @orfIDs=keys %codreg;
-        die "Error: The reference identifer $target in the bam file does not match the reference identifier in your $orfs:\n @orfIDs\n";
+        die "Error: The reference identifer $target in the bam file does not match the reference identifier in your $orfs:\n@orfIDs\n";
       }
     }
+}else{
+  print "No orfs file provided\n";
+
 }
 
 # start parsing the information from the bam file
@@ -770,4 +775,25 @@ sub revcomp {
         # complement the reversed DNA sequence
         $revcomp =~ tr/ATGCatgcNn/TACGtacgNn/;
         return $revcomp;
+}
+
+sub convertNewlines {
+   # https://www.perlmonks.org/?node_id=8991
+    my $filename = $_[0];  
+    # don't mess with it unless it's a text file:
+    return unless (-T $filename);
+    open(FILE, "< $filename")or die "Couldn't open file ($filename) for reading: $!";
+    my $converted_text;
+    my $line_endings_converted = 0;
+    while (my $line = <FILE>){
+        $line_endings_converted +=($line =~ s/(?:\015\012|\015|\012)/\012/g);
+        $converted_text .= $line;
+    }
+    # now save it, and binmode it so no additional conversion is done to
+    # the line endings:
+    open(FILE, "> $filename")or die "Couldn't open file ($filename) for writing: $!";
+    binmode FILE;
+    print FILE $converted_text;
+    close FILE;
+    print "Checked that line ending for \"$filename\" is Unix (LF)\n";
 }
