@@ -247,6 +247,7 @@ foreach my $target (@targets){
             my $match_len=$1;
             #need to trim $query_dna and $ref_dna for the region of the match
             my $sub_query_dna = substr($query_dna,$readpos,$match_len);
+            my @sub_scores = @scores[ $readpos .. $#scores ];
             my $sub_ref_dna=substr($ref_dna,$refpos,$match_len);
             # re-using code from btcutils
             my @bases=split(//,$sub_query_dna);
@@ -261,7 +262,8 @@ foreach my $target (@targets){
               $basefreq{$target}{$site}{$strand}{uc($bases[$i])}++;
               #print "$bam\t$target\t$site\t$bases[$i]\t$basefreq{$bam}{$target}{$site}{$bases[$i]}\n"; 
               $refbase{$target}{$site}=$refbases[$i];
-              my $P = 10**(-$scores[$i]/10);
+              my $P = 10**(-$sub_scores[$i]/10);
+              #print "$name $bases[$i] $sub_scores[$i] $P\n";
               if ($cumulqual{$target}{$site}){
                 $cumulqual{$target}{$site}=$cumulqual{$bam}{$target}{$site}+$P;
               }else{
