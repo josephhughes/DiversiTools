@@ -265,7 +265,7 @@ foreach my $target (@targets){
               my $P = 10**(-$sub_scores[$i]/10);
               #print "$name $bases[$i] $sub_scores[$i] $P\n";
               if ($cumulqual{$target}{$site}){
-                $cumulqual{$target}{$site}=$cumulqual{$bam}{$target}{$site}+$P;
+                $cumulqual{$target}{$site}=$cumulqual{$target}{$site}+$P;
               }else{
                 $cumulqual{$target}{$site}=$P;
               }
