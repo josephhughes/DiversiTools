@@ -540,14 +540,15 @@ foreach my $gene (keys %refseq){
       $cntG=$Gplus+$Gneg;
       $cntN=$Nplus+$Nneg;
       my $coverage = $cntA + $cntT + $cntC + $cntG + $cntN;
-      my $average_p=$cumulqual{$gene}{$site}/$coverage;
-      my $p = $average_p/3;
-      my %prob;
-      $prob{"A"} = 1 - (&Math::CDF::pbinom(($cntA-1), $coverage, $p));# need to double check with Richard about the -1
-      $prob{"C"} = 1 - (&Math::CDF::pbinom(($cntC-1), $coverage, $p));
-      $prob{"T"} = 1 - (&Math::CDF::pbinom(($cntT-1), $coverage, $p));
-      $prob{"G"} = 1 - (&Math::CDF::pbinom(($cntG-1), $coverage, $p));
+      my ($average_p, %prob);
       if ($coverage>0){
+        $average_p=$cumulqual{$gene}{$site}/$coverage;
+        my $p = $average_p/3;
+        $prob{"A"} = 1 - (&Math::CDF::pbinom(($cntA-1), $coverage, $p));# need to double check with Richard about the -1
+        $prob{"C"} = 1 - (&Math::CDF::pbinom(($cntC-1), $coverage, $p));
+        $prob{"T"} = 1 - (&Math::CDF::pbinom(($cntT-1), $coverage, $p));
+        $prob{"G"} = 1 - (&Math::CDF::pbinom(($cntG-1), $coverage, $p));
+      
         foreach my $nuc (@nuc){
           my $nucnt=$basefreq{$gene}{$site}{1}{$nuc}+$basefreq{$gene}{$site}{-1}{$nuc};
           my $p = $nucnt / $coverage;
@@ -557,6 +558,11 @@ foreach my $gene (keys %refseq){
         }   
       }else{
         $shannon{$gene}{$site}="<NA>";
+        $average_p="<NA>";
+        $prob{"A"}="<NA>";
+        $prob{"C"}="<NA>";
+        $prob{"T"}="<NA>";
+        $prob{"G"}="<NA>";
       }   
       $nbsites++;
       $sumentropy=$sumentropy+$shannon{$gene}{$site};
