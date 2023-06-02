@@ -31,7 +31,7 @@ use Bio::SeqIO;
 use List::Util 'sum'; # for counting the values in the inserfreq and delfreq hash
 
 # global variables
-my ($bam, $ref, $orfs,$help);
+my ($bam, $ref, $orfs,$help, $index);
 my (%basefreq,%refbase,%cumulqual,%readinfo,%delfreq,%insfreq,%readmis);# data storing 
 my (%aafreq,%aaorder,%stopfreq,%codonfreq);# storing of AA info
 my $stub="output";
@@ -41,6 +41,7 @@ my $stub="output";
         'ref:s'  => \$ref, #reference file in fasta  
         'orfs:s' => \$orfs, #start stop position for each gene labelled the same way as the ref file, keep in mind that a gene may code for multiple proteins
         "stub:s" => \$stub,
+        "index"  => \$index,
            );
 
 if (($help)&&!($help)||!($bam)||!($ref)){
@@ -57,6 +58,7 @@ if (($help)&&!($help)||!($bam)||!($ref)){
   print " -ref <txt>  - the reference fasta file\n";
   print " -orfs <txt> - text tab-delimited file with Protein,Beginning,End,Reference(Chr) of the coding sequence [optional: only if you want information about dN/dS and aa frequencies etc...]\n";
   print " -stub <txt> - the output in text-tab delimited\n";
+  print " -index      - optional argument to use if you want to use an already produced reference fasta file index .fai file\n";
   print " -help        - Get this help\n";
   exit();
 }
@@ -65,7 +67,7 @@ open(LOG,">$stub\_log.txt")||die "Can't open output $stub\_log.txt\n";
 
 # remove indexed reference fasta file
 my $indexref="$ref\.fai";
-if ($indexref){
+if ($indexref && !$index){
   system("rm $indexref");
 }
 # high level API
