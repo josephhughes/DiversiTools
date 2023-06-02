@@ -140,17 +140,33 @@ for my $sample (keys %table){
       }
       # recalculate entropy
       my $shannon=0;
-      if ($table{$sample}{$chr}{$position}{"Coverage"}>0){
-        foreach my $nuc (@nuc){
-          my $nucnt=$Acnt+$Ccnt+$Gcnt+$Tcnt;
+      my $nucnt=$Acnt+$Ccnt+$Gcnt+$Tcnt;
+      if ($nucnt>0){
+#      if ($table{$sample}{$chr}{$position}{"Coverage"}>0){
+#        foreach my $nuc (@nuc){
+          
           # not checked yet, looks wrong
           #my $p = $nucnt / $table{$sample}{$chr}{$position}{"Coverage"};
-          my $p = $nuc / $nucnt;
+#          my $p = $nuc / $nucnt;
           # changed nucnt to nuc
-          if($nuc > 0){
+          if($Acnt > 0){
+            my $p = $Acnt/$nucnt;
             $shannon += -$p*log($p);#natural log, i.e. log base e
           }
-        }   
+           if($Ccnt > 0){
+            my $p = $Ccnt/$nucnt;
+            $shannon += -$p*log($p);#natural log, i.e. log base e
+          }
+          if($Gcnt > 0){
+            my $p = $Gcnt/$nucnt;
+            $shannon += -$p*log($p);#natural log, i.e. log base e
+          }
+          if($Tcnt > 0){
+            my $p = $Tcnt/$nucnt;
+            $shannon += -$p*log($p);#natural log, i.e. log base e
+          }
+         
+#        }   
       }else{
         $shannon="<NA>";
       }   
