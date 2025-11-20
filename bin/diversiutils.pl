@@ -129,6 +129,7 @@ if ($orfs){
         }
       }
     }
+    close(CODING);
     # from PAL2NAL
     #load translation table if start and stop specified
     # IUPAC
